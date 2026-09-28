@@ -54,7 +54,6 @@ regie/
 
 - `GET  api.php?action=all` → `{admin, events, postes, creneaux, benevoles, affectations}` (la même forme que celle qu'attend l'interface). Public ; champs privés retirés hors admin.
 - `POST api.php` avec `{action: create|update|delete, table, id?, data}` et l'en-tête `X-CSRF-Token` : **admin uniquement**
-- `POST api.php` avec `{action: delete_day, eventId, jour}` : **admin**. Supprime tous les créneaux d'un jour, et leurs affectations par cascade (bouton « Supprimer les créneaux du jour » dans l'onglet Planning).
 - `POST api.php` avec `{action: signup, creneauId, prenom, nom}` et l'en-tête `X-CSRF-Token` : public. L'insertion est conditionnelle (`INSERT … SELECT … WHERE nb < besoin`) pour ne jamais dépasser le besoin. Il y a un champ piège `website` et une limite de 20 inscriptions par heure et par session.
 - `POST api.php` avec `{action: login, password}` / `{action: logout}`
 - `export.php` (CSV et sauvegarde JSON) : admin uniquement

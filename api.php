@@ -3,7 +3,6 @@
 //   GET  api.php?action=all                 -> {events, postes, creneaux, benevoles, affectations}
 //        public ; sans session admin, tel/email/notes des bénévoles sont retirés.
 //   POST api.php {action: create|update|delete, table, id?, data}   admin (en-tête X-CSRF-Token)
-//   POST api.php {action: delete_day, eventId, jour}                 admin : supprime les créneaux du jour
 //   POST api.php {action: signup, creneauId, prenom, nom, tel?, email?}  public (en-tête X-CSRF-Token)
 //   POST api.php {action: login, password} / {action: logout}
 
@@ -191,15 +190,6 @@ try {
 
     if (!is_admin()) fail('Réservé aux organisateurs : connectez-vous.', 401, 'auth');
     if ($method !== 'POST') fail('Action inconnue.', 404, 'not_found');
-
-    // Suppression de tous les créneaux d'un jour (les affectations suivent par cascade).
-    if ($action === 'delete_day') {
-        $jour = (string)($body['jour'] ?? '');
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $jour)) fail('Jour invalide.');
-        $st = $pdo->prepare('DELETE FROM creneaux WHERE event_id = ? AND jour = ?');
-        $st->execute([(string)($body['eventId'] ?? ''), $jour]);
-        out(['ok' => true, 'deleted' => $st->rowCount()]);
-    }
 
     $table = (string)($body['table'] ?? '');
     if (!isset(TABLES[$table])) fail('Table non autorisée.');

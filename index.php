@@ -259,7 +259,7 @@ function rPlan(){
     <div class="legend"><span><span class="pill ok">${t('complet')}</span></span><span><span class="pill warn">${t('partiel')}</span></span><span><span class="pill crit">${t('vide')}</span></span><span>${t('Un créneau qui commence avant 6h compte dans la nuit du jour affiché (ex. 00h–05h le 31/12 = nuit du 31 au 1er).')}</span></div>`;
   }
   const seg=`<div class="seg" role="group" aria-label="${t('Affichage')}">${[['grid',t('Grille')],['list',t('Liste')]].map(v=>`<button type="button" data-act="view" data-id="${v[0]}" aria-pressed="${S.view===v[0]}">${v[1]}</button>`).join('')}</div>`;
-  return `<section class="sec"><div class="sec-h"><div class="days">${chips}</div><div class="actions">${seg}${cs.length?`<button class="btn danger adm" type="button" data-act="day-del" data-day="${esc(S.day)}">${t('Supprimer les créneaux du jour')}</button>`:''}<button class="btn pri adm" type="button" data-act="cren-new" data-day="${esc(S.day)}">${t('+ Créneau')}</button></div></div>${body}</section>`;
+  return `<section class="sec"><div class="sec-h"><div class="days">${chips}</div><div class="actions">${seg}<button class="btn pri adm" type="button" data-act="cren-new" data-day="${esc(S.day)}">${t('+ Créneau')}</button></div></div>${body}</section>`;
 }
 /* vue liste : comme la page d'inscription, regroupée par poste (dans l'ordre de leur premier créneau) */
 function rPlanList(cs){
@@ -400,9 +400,6 @@ function armed(el,label){
   setTimeout(()=>{if(el.isConnected&&el.classList.contains('armed')){el.classList.remove('armed');el.textContent=lab}},5000);
   return false;
 }
-async function deleteDay(jour){
-  if(await w(()=>api({action:'delete_day',eventId:S.eventId,jour}),t('Créneaux du {d} supprimés',{d:shortDay(jour)})))render();
-}
 async function deleteCren(id){
   if(await w(()=>remove('creneaux',id),t('Créneau supprimé'))){closeDr();render()}
 }
@@ -436,9 +433,6 @@ document.addEventListener('click',async ev0=>{
     case 'cren-new':openForm('cren',null,{posteId:el.dataset.poste||(P()[0]&&P()[0].id),jour:el.dataset.day||S.day||eventDays()[0],debut:'18:00',fin:'22:00',besoin:2});break;
     case 'cren-edit':openForm('cren',id);break;
     case 'cren-del':{const n=affsOf(id).length;if(armed(el,n?tn(n,'Confirmer (retire {n} affectation)','Confirmer (retire {n} affectations)'):t('Confirmer')))deleteCren(id);break}
-    case 'day-del':{const d=el.dataset.day;const cs=C().filter(c=>c.jour===d);const n=S.affs.filter(a=>cs.some(c=>c.id===a.creneauId)).length;
-      const lab=n?t('Confirmer : {c} et {a} supprimés',{c:tn(cs.length,'{n} créneau','{n} créneaux'),a:tn(n,'{n} affectation','{n} affectations')}):t('Confirmer : {c} supprimés',{c:tn(cs.length,'{n} créneau','{n} créneaux')});
-      if(armed(el,lab))deleteDay(d);break}
     case 'ben-new':openForm('ben');break;
     case 'ben-edit':openForm('ben',id);break;
     case 'csv':exportCsv();break;
