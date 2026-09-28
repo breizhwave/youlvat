@@ -103,7 +103,7 @@ Un seul point d'entrée `api.php` :
 
 - `GET ?action=all` → tout l'état dont l'interface a besoin, en une requête. Suffisant tant que les données tiennent en quelques centaines de Ko.
 - `POST {action: create|update|delete, table, id?, data}` → CRUD générique, **admin uniquement**.
-- Actions métier dédiées pour ce qui est public ou délicat (`signup`, `delete_day`…), avec leurs propres contrôles.
+- Actions métier dédiées pour ce qui est public ou délicat (`signup`…), avec leurs propres contrôles.
 - `POST {action: login|logout}`.
 
 Règles :
