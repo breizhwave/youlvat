@@ -1,0 +1,627 @@
+{
+ "events": {
+  "kalanna26": {
+   "contact": "degemer@kalanna.bzh",
+   "debut": "2026-12-29",
+   "deroule": "19:00 Apéro\n20:00 Ouverture des portes\n04:15 Fin de la musique\n04:45 Fin du service bar\n06:00 Départ des derniers bénévoles",
+   "fin": "2027-01-02",
+   "imageUrl": "https://ik.imagekit.io/hfctelrlt/2026/kalanna2026-web.png",
+   "lieu": "Quimper",
+   "nom": "Fest-noz Vras Kalanna 2026",
+   "sheetUrl": "https://docs.google.com/spreadsheets/d/1HvRV86lsLdmffUkXGuyAQl45E9FklPDL/edit?gid=139294156#gid=139294156"
+  }
+ },
+ "postes": {
+  "billet": {
+   "couleur": 2,
+   "description": "Caisse et contrôle des entrées. Après 1h : caisse crêpes/gâteaux.",
+   "eventId": "kalanna26",
+   "nom": "Bilhederezh – Billetterie"
+  },
+  "bod": {
+   "couleur": 3,
+   "description": "Point hébergement Ti ar Brug : préparation des chambres, petit-déjeuner, ménage, linge (28 draps…).",
+   "eventId": "kalanna26",
+   "nom": "Bod – Hébergement artistes & techniciens"
+  },
+  "bugale": {
+   "couleur": 5,
+   "eventId": "kalanna26",
+   "nom": "Korn ar vugale – Espace enfants"
+  },
+  "caisses": {
+   "couleur": 4,
+   "description": "Trésorier + aide, toute la soirée.",
+   "eventId": "kalanna26",
+   "nom": "Suivi des caisses"
+  },
+  "degemer": {
+   "couleur": 2,
+   "eventId": "kalanna26",
+   "nom": "Degemer an dud – Accueil bénévoles"
+  },
+  "gobel": {
+   "couleur": 4,
+   "description": "Gestion des gobelets, 1 personne par créneau.",
+   "eventId": "kalanna26",
+   "nom": "Gobelets"
+  },
+  "gwisk": {
+   "couleur": 6,
+   "description": "2 stands.",
+   "eventId": "kalanna26",
+   "nom": "Gwiskva – Vestiaire"
+  },
+  "inst": {
+   "couleur": 0,
+   "description": "29/12 : matériel aux services techniques de Quimper, matelas Skol Diwan, point hébergement Ti ar Brug, préinstallation déco. 30/12 : tables, éclairage, déco. 02/01 : rangement et nettoyage.",
+   "eventId": "kalanna26",
+   "nom": "Staliadur ha kempenn – Installation & rangement"
+  },
+  "kramp-enc": {
+   "couleur": 1,
+   "eventId": "kalanna26",
+   "nom": "Krampouezh – Encaissement"
+  },
+  "kramp-garn": {
+   "couleur": 1,
+   "eventId": "kalanna26",
+   "nom": "Krampouezh – Garnissage"
+  },
+  "kramp-prep": {
+   "couleur": 1,
+   "description": "Préparation de la pâte et des ingrédients la veille (Quimperlé).",
+   "eventId": "kalanna26",
+   "nom": "Krampouezh – Préparation (veille)"
+  },
+  "kramp-rav": {
+   "couleur": 1,
+   "eventId": "kalanna26",
+   "nom": "Krampouezh – Ravitaillement"
+  },
+  "kramp-resp": {
+   "couleur": 1,
+   "description": "1 stand côté cuisine, 14 billigs.",
+   "eventId": "kalanna26",
+   "nom": "Krampouezh – Responsables"
+  },
+  "kramp-tour": {
+   "couleur": 1,
+   "eventId": "kalanna26",
+   "nom": "Krampouezh – Tourneurs"
+  },
+  "kramp-vais": {
+   "couleur": 1,
+   "eventId": "kalanna26",
+   "nom": "Krampouezh – Vaisselle"
+  },
+  "laverie": {
+   "couleur": 7,
+   "eventId": "kalanna26",
+   "nom": "Kannerezh – Laverie"
+  },
+  "photo": {
+   "couleur": 3,
+   "eventId": "kalanna26",
+   "nom": "Luc'hskeudenner – Photographe"
+  },
+  "regie": {
+   "couleur": 1,
+   "description": "Régisseur + accueil des artistes, gestion des repas, accès hébergement.",
+   "eventId": "kalanna26",
+   "nom": "Merer teknikel – Régie & accueil artistes"
+  },
+  "secours": {
+   "couleur": 5,
+   "description": "Équipe d'appui professionnelle (astreinte).",
+   "eventId": "kalanna26",
+   "nom": "Sikourer – Secouristes"
+  },
+  "secu": {
+   "couleur": 7,
+   "description": "Équipe d'appui ORIOS : surveillance des entrées, des abords et des flux.",
+   "eventId": "kalanna26",
+   "nom": "Surentez – Sécurité"
+  },
+  "soubenn": {
+   "couleur": 1,
+   "description": "Équipe autonome de 3 personnes, service de 3h à 4h15.",
+   "eventId": "kalanna26",
+   "nom": "Soubenn ognon – Soupe à l'oignon"
+  },
+  "stal": {
+   "couleur": 6,
+   "eventId": "kalanna26",
+   "nom": "Stal – Boutique"
+  },
+  "tavarn": {
+   "couleur": 0,
+   "eventId": "kalanna26",
+   "nom": "Tavarn – Bar"
+  },
+  "video": {
+   "couleur": 3,
+   "eventId": "kalanna26",
+   "nom": "Filmaozer – Vidéo"
+  }
+ },
+ "creneaux": {
+  "b1": {
+   "besoin": 9,
+   "debut": "19:45",
+   "eventId": "kalanna26",
+   "fin": "23:00",
+   "jour": "2026-12-31",
+   "note": "1 resp. + 2 caisse + 6 contrôle",
+   "posteId": "billet"
+  },
+  "b2": {
+   "besoin": 6,
+   "debut": "23:00",
+   "eventId": "kalanna26",
+   "fin": "01:00",
+   "jour": "2026-12-31",
+   "note": "2 caisse + 4 contrôle",
+   "posteId": "billet"
+  },
+  "b3": {
+   "besoin": 2,
+   "debut": "01:00",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Caisse crêpes/gâteaux",
+   "posteId": "billet"
+  },
+  "bo1": {
+   "besoin": 2,
+   "debut": "14:00",
+   "eventId": "kalanna26",
+   "fin": "18:00",
+   "jour": "2026-12-31",
+   "note": "Préparation des chambres, horaires à préciser",
+   "posteId": "bod"
+  },
+  "bo2": {
+   "besoin": 2,
+   "debut": "09:00",
+   "eventId": "kalanna26",
+   "fin": "12:00",
+   "jour": "2027-01-01",
+   "note": "Petit-déjeuner et ménage",
+   "posteId": "bod"
+  },
+  "bo3": {
+   "besoin": 2,
+   "debut": "10:00",
+   "eventId": "kalanna26",
+   "fin": "13:00",
+   "jour": "2027-01-02",
+   "note": "Lavage du linge (28 draps…), horaires à préciser",
+   "posteId": "bod"
+  },
+  "ca": {
+   "besoin": 2,
+   "debut": "19:45",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Toute la soirée",
+   "posteId": "caisses"
+  },
+  "d1": {
+   "besoin": 1,
+   "debut": "17:00",
+   "eventId": "kalanna26",
+   "fin": "21:00",
+   "jour": "2026-12-31",
+   "posteId": "degemer"
+  },
+  "e1": {
+   "besoin": 2,
+   "debut": "19:45",
+   "eventId": "kalanna26",
+   "fin": "23:00",
+   "jour": "2026-12-31",
+   "posteId": "bugale"
+  },
+  "e2": {
+   "besoin": 2,
+   "debut": "23:00",
+   "eventId": "kalanna26",
+   "fin": "02:00",
+   "jour": "2026-12-31",
+   "posteId": "bugale"
+  },
+  "e3": {
+   "besoin": 2,
+   "debut": "02:00",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Jusqu'à la fin",
+   "posteId": "bugale"
+  },
+  "g1": {
+   "besoin": 1,
+   "debut": "19:45",
+   "eventId": "kalanna26",
+   "fin": "23:00",
+   "jour": "2026-12-31",
+   "posteId": "gobel"
+  },
+  "g2": {
+   "besoin": 1,
+   "debut": "23:00",
+   "eventId": "kalanna26",
+   "fin": "02:00",
+   "jour": "2026-12-31",
+   "posteId": "gobel"
+  },
+  "g3": {
+   "besoin": 1,
+   "debut": "02:00",
+   "eventId": "kalanna26",
+   "fin": "04:45",
+   "jour": "2026-12-31",
+   "posteId": "gobel"
+  },
+  "i1": {
+   "besoin": 6,
+   "debut": "09:00",
+   "eventId": "kalanna26",
+   "fin": "18:00",
+   "jour": "2026-12-29",
+   "note": "Horaires à préciser",
+   "posteId": "inst"
+  },
+  "i2": {
+   "besoin": 14,
+   "debut": "10:00",
+   "eventId": "kalanna26",
+   "fin": "19:00",
+   "jour": "2026-12-30",
+   "note": "Tables, éclairage, matériel, déco (20 personnes minimum sur la journée avec l'équipe krampouezh)",
+   "posteId": "inst"
+  },
+  "i3": {
+   "besoin": 4,
+   "debut": "10:00",
+   "eventId": "kalanna26",
+   "fin": "19:00",
+   "jour": "2026-12-30",
+   "note": "Préparation du stand krampouezh",
+   "posteId": "kramp-prep"
+  },
+  "i4": {
+   "besoin": 3,
+   "debut": "14:00",
+   "eventId": "kalanna26",
+   "fin": "18:00",
+   "jour": "2026-12-30",
+   "note": "Ingrédients à Quimperlé, horaires à préciser",
+   "posteId": "kramp-prep"
+  },
+  "i5": {
+   "besoin": 8,
+   "debut": "09:00",
+   "eventId": "kalanna26",
+   "fin": "14:00",
+   "jour": "2026-12-31",
+   "note": "À partir de 9h",
+   "posteId": "inst"
+  },
+  "i6": {
+   "besoin": 18,
+   "debut": "09:00",
+   "eventId": "kalanna26",
+   "fin": "19:00",
+   "jour": "2027-01-02",
+   "note": "Rangement et nettoyage",
+   "posteId": "inst"
+  },
+  "ke2": {
+   "besoin": 2,
+   "debut": "18:00",
+   "eventId": "kalanna26",
+   "fin": "21:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-enc"
+  },
+  "ke3": {
+   "besoin": 4,
+   "debut": "21:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-enc"
+  },
+  "ke4": {
+   "besoin": 2,
+   "debut": "00:00",
+   "eventId": "kalanna26",
+   "fin": "03:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-enc"
+  },
+  "kg2": {
+   "besoin": 8,
+   "debut": "18:00",
+   "eventId": "kalanna26",
+   "fin": "21:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-garn"
+  },
+  "kg3": {
+   "besoin": 8,
+   "debut": "21:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-garn"
+  },
+  "kg4": {
+   "besoin": 4,
+   "debut": "00:00",
+   "eventId": "kalanna26",
+   "fin": "03:00",
+   "jour": "2026-12-31",
+   "note": "Et rangements",
+   "posteId": "kramp-garn"
+  },
+  "kr": {
+   "besoin": 2,
+   "debut": "14:00",
+   "eventId": "kalanna26",
+   "fin": "03:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-resp"
+  },
+  "kt1": {
+   "besoin": 8,
+   "debut": "14:00",
+   "eventId": "kalanna26",
+   "fin": "18:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-tour"
+  },
+  "kt2": {
+   "besoin": 2,
+   "debut": "18:00",
+   "eventId": "kalanna26",
+   "fin": "21:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-tour"
+  },
+  "kt3": {
+   "besoin": 2,
+   "debut": "21:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-tour"
+  },
+  "kv1": {
+   "besoin": 1,
+   "debut": "14:00",
+   "eventId": "kalanna26",
+   "fin": "18:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-rav"
+  },
+  "kv2": {
+   "besoin": 1,
+   "debut": "18:00",
+   "eventId": "kalanna26",
+   "fin": "21:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-rav"
+  },
+  "kv3": {
+   "besoin": 1,
+   "debut": "21:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-rav"
+  },
+  "kv4": {
+   "besoin": 1,
+   "debut": "00:00",
+   "eventId": "kalanna26",
+   "fin": "03:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-rav"
+  },
+  "kw2": {
+   "besoin": 1,
+   "debut": "18:00",
+   "eventId": "kalanna26",
+   "fin": "21:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-vais"
+  },
+  "kw3": {
+   "besoin": 1,
+   "debut": "21:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "kramp-vais"
+  },
+  "la1": {
+   "besoin": 1,
+   "debut": "19:00",
+   "eventId": "kalanna26",
+   "fin": "23:00",
+   "jour": "2026-12-31",
+   "note": "Effectif à préciser",
+   "posteId": "laverie"
+  },
+  "la2": {
+   "besoin": 1,
+   "debut": "23:00",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Effectif à préciser, jusqu'à la fin",
+   "posteId": "laverie"
+  },
+  "m1": {
+   "besoin": 2,
+   "debut": "20:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "secours"
+  },
+  "m2": {
+   "besoin": 2,
+   "debut": "00:00",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Jusqu'à la fin",
+   "posteId": "secours"
+  },
+  "ph": {
+   "besoin": 1,
+   "debut": "19:00",
+   "eventId": "kalanna26",
+   "fin": "04:15",
+   "jour": "2026-12-31",
+   "note": "Soirée",
+   "posteId": "photo"
+  },
+  "r1": {
+   "besoin": 4,
+   "debut": "14:00",
+   "eventId": "kalanna26",
+   "fin": "20:00",
+   "jour": "2026-12-31",
+   "note": "1 responsable + 3",
+   "posteId": "regie"
+  },
+  "r2": {
+   "besoin": 2,
+   "debut": "20:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "regie"
+  },
+  "r3": {
+   "besoin": 1,
+   "debut": "00:00",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Jusqu'à la fin",
+   "posteId": "regie"
+  },
+  "s1": {
+   "besoin": 2,
+   "debut": "20:00",
+   "eventId": "kalanna26",
+   "fin": "00:00",
+   "jour": "2026-12-31",
+   "posteId": "secu"
+  },
+  "s2": {
+   "besoin": 2,
+   "debut": "00:00",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Jusqu'à la fin",
+   "posteId": "secu"
+  },
+  "so": {
+   "besoin": 3,
+   "debut": "03:00",
+   "eventId": "kalanna26",
+   "fin": "04:15",
+   "jour": "2026-12-31",
+   "note": "Équipe autonome",
+   "posteId": "soubenn"
+  },
+  "st1": {
+   "besoin": 1,
+   "debut": "19:45",
+   "eventId": "kalanna26",
+   "fin": "23:00",
+   "jour": "2026-12-31",
+   "posteId": "stal"
+  },
+  "st2": {
+   "besoin": 1,
+   "debut": "23:00",
+   "eventId": "kalanna26",
+   "fin": "02:00",
+   "jour": "2026-12-31",
+   "posteId": "stal"
+  },
+  "t1": {
+   "besoin": 8,
+   "debut": "19:45",
+   "eventId": "kalanna26",
+   "fin": "23:00",
+   "jour": "2026-12-31",
+   "posteId": "tavarn"
+  },
+  "t2": {
+   "besoin": 10,
+   "debut": "23:00",
+   "eventId": "kalanna26",
+   "fin": "02:00",
+   "jour": "2026-12-31",
+   "posteId": "tavarn"
+  },
+  "t3": {
+   "besoin": 8,
+   "debut": "02:00",
+   "eventId": "kalanna26",
+   "fin": "04:45",
+   "jour": "2026-12-31",
+   "note": "Fin du service bar 4h30–4h45",
+   "posteId": "tavarn"
+  },
+  "v1": {
+   "besoin": 8,
+   "debut": "19:45",
+   "eventId": "kalanna26",
+   "fin": "23:00",
+   "jour": "2026-12-31",
+   "note": "2 stands",
+   "posteId": "gwisk"
+  },
+  "v2": {
+   "besoin": 5,
+   "debut": "23:00",
+   "eventId": "kalanna26",
+   "fin": "02:00",
+   "jour": "2026-12-31",
+   "posteId": "gwisk"
+  },
+  "v3": {
+   "besoin": 5,
+   "debut": "02:00",
+   "eventId": "kalanna26",
+   "fin": "05:00",
+   "jour": "2026-12-31",
+   "note": "Jusqu'à la fin",
+   "posteId": "gwisk"
+  },
+  "vid": {
+   "besoin": 1,
+   "debut": "19:00",
+   "eventId": "kalanna26",
+   "fin": "04:15",
+   "jour": "2026-12-31",
+   "note": "Soirée",
+   "posteId": "video"
+  }
+ },
+ "benevoles": {},
+ "affectations": {}
+}

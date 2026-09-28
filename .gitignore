@@ -1,0 +1,7 @@
+# Base de données locale (données personnelles des bénévoles)
+data/*.sqlite
+data/*.sqlite-*
+# Configuration locale (hash du mot de passe admin) — voir config.example.php
+config.php
+.DS_Store
+.idea/
