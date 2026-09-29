@@ -62,9 +62,9 @@ const isPast=e=>(e.fin||e.debut)<new Date().toISOString().slice(0,10);
 const evWhen=e=>[e.lieu,e.debut?(fmtDay(e.debut,{day:'numeric',month:'long'})+(e.fin&&e.fin!==e.debut?' → '+fmtDay(e.fin,{day:'numeric',month:'long',year:'numeric'}):'')):''].filter(Boolean).join(' · ');
 const q=id=>id?'?event='+encodeURIComponent(id):'';
 const isEmail=s=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s||'');
-/* texte de la page : une colonne par langue ; en breton, repli sur le français si vide */
-const HTML_KEY=I18N.lang==='br'?'contactHtmlBr':'contactHtml';
-const pageHtml=e=>e[HTML_KEY]||(I18N.lang==='br'?e.contactHtml:'')||'';
+/* texte de la page : une colonne par langue ; en breton ou en anglais, repli sur le français si vide */
+const HTML_KEY={br:'contactHtmlBr',en:'contactHtmlEn'}[I18N.lang]||'contactHtml';
+const pageHtml=e=>e[HTML_KEY]||e.contactHtml||'';
 
 function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>{el.hidden=true},3000)}
 async function api(body){
@@ -140,10 +140,10 @@ function rEdit(e){
   const html=e[HTML_KEY]||'';
   return `<section class="panel contact-page">
     <h2>${t('Nous contacter')}</h2>
-    <div class="field"><label id="rteLab">${t('Texte de la page en {l}',{l:I18N.lang==='br'?t('breton'):t('français')})}</label>
+    <div class="field"><label id="rteLab">${t('Texte de la page en {l}',{l:t({br:'breton',en:'anglais'}[I18N.lang]||'français')})}</label>
       <div class="rte-bar" role="toolbar" aria-label="${t('Mise en forme')}">${TOOLS.map(([c,l,tt])=>`<button type="button" data-cmd="${c}" title="${esc(tt)}" aria-label="${esc(tt)}">${l}</button>`).join('')}</div>
       <div class="rte" id="rte" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="rteLab">${html?safeHtml(html):`<p>${t('Une question sur le bénévolat ? Écrivez-nous ou appelez-nous.')}</p>`}</div>
-      <span class="muted" style="font-size:12.5px">${t('Pour modifier l’autre version, changez de langue en haut de page (après avoir enregistré).')}</span>
+      <span class="muted" style="font-size:12.5px">${t('Pour modifier une autre version, changez de langue en haut de page (après avoir enregistré).')}</span>
     </div>
     <h3 style="margin-top:6px">${t('Coordonnées')}</h3>
     <div class="frow">

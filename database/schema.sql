@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS events (
   contact_infos TEXT,             -- autres coordonnées, une par ligne (adresse, site web, réseaux…)
   contact_html  TEXT,             -- texte de la page contact (HTML nettoyé), en français
   contact_html_br TEXT,           -- idem en breton (vide = on affiche la version française)
+  contact_html_en TEXT,           -- idem en anglais (vide = on affiche la version française)
   deroule     TEXT,               -- une étape par ligne : "20:00 Ouverture des portes"
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
   updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))

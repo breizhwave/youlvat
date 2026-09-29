@@ -41,7 +41,7 @@ function clean(string $table, array $data): array
         $out[$k] = $v;
     }
     // texte riche de la page contact : balises et liens en liste blanche
-    foreach (['contactHtml', 'contactHtmlBr'] as $k) {
+    foreach (['contactHtml', 'contactHtmlBr', 'contactHtmlEn'] as $k) {
         if (!isset($out[$k])) continue;
         if (strlen($out[$k]) > 50000) fail('Texte trop long.');
         $out[$k] = sanitize_html($out[$k]) ?: null;

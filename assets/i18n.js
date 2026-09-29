@@ -1,17 +1,18 @@
-/* Régie Bénévoles — traductions (français / brezhoneg).
-   Le texte français sert de clé : t('Planning') renvoie la traduction bretonne si la langue est « br »,
+/* Régie Bénévoles — traductions (français / brezhoneg / English).
+   Le texte français sert de clé : t('Planning') renvoie la traduction de la langue courante (BR ou EN),
    sinon le texte français tel quel. Variables : t('manque {n}',{n:3}).
    Pluriels : tn(n,'{n} créneau','{n} créneaux') (en breton, le nom reste au singulier après un nombre).
-   Langue : ?lang=br|fr dans l'URL (mémorisé), sinon localStorage « rb.lang », sinon français.
+   Langue : ?lang=br|fr|en dans l'URL (mémorisé), sinon localStorage « rb.lang », sinon français.
    Traductions bretonnes à faire relire par un·e brittophone. */
 (function(){
-const LANGS=[['br','BZH','BR'],['fr','FR','FR']];
+const LANGS=[['br','BZH','BR'],['fr','FR','FR'],['en','EN','EN']];
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 
 let lang='fr';
 const fromUrl=new URLSearchParams(location.search).get('lang');
-if(fromUrl==='br'||fromUrl==='fr'){lang=fromUrl;ls.set('rb.lang',lang)}
-else if(ls.get('rb.lang')==='br')lang='br';
+const KNOWN=LANGS.map(l=>l[0]);
+if(KNOWN.includes(fromUrl)){lang=fromUrl;ls.set('rb.lang',lang)}
+else if(KNOWN.includes(ls.get('rb.lang')))lang=ls.get('rb.lang');
 document.documentElement.lang=lang;
 
 const BR={
@@ -287,7 +288,8 @@ const BR={
 "Texte de la page en {l}":"Testenn ar bajenn e {l}",
 "breton":"brezhoneg",
 "français":"galleg",
-"Pour modifier l’autre version, changez de langue en haut de page (après avoir enregistré).":"Evit kemmañ ar stumm all, cheñchit yezh e penn ar bajenn (goude bezañ enrollet).",
+"anglais":"saozneg",
+"Pour modifier une autre version, changez de langue en haut de page (après avoir enregistré).":"Evit kemmañ ur stumm all, cheñchit yezh e penn ar bajenn (goude bezañ enrollet).",
 "Coordonnées":"Titouroù darempred",
 "Annuler":"Nullañ",
 "Adresse du lien (https://…, mailto:… ou tel:…)":"Chomlec'h al liamm (https://…, mailto:… pe tel:…)",
@@ -331,11 +333,331 @@ const BR={
 "Le dossier data/ n'est pas inscriptible par PHP. Donnez-lui les droits d'écriture (chmod 775 ou 777 selon l'hébergeur).":"N'hall ket PHP skrivañ er c'havlec'h data/. Roit dezhañ an aotreoù skrivañ (chmod 775 pe 777 hervez an herberc'hier)."
 };
 
+/* English: same French keys. Keep it in sync with BR. */
+const EN={
+/* en-tête, navigation */
+"YOUL VAT - Régie Bénévoles":"YOUL VAT - Volunteer Manager",
+"Régie Bénévoles":"Volunteer Manager",
+"Inscription bénévoles":"Volunteer sign-up",
+"Tous les événements":"All events",
+"Aucun événement":"No events",
+"Événement":"Event",
+"Événements":"Events",
+"Choisissez un événement":"Choose an event",
+"Chargement…":"Loading…",
+"Chargement des données…":"Loading data…",
+"Chargement des créneaux…":"Loading shifts…",
+"Modifier":"Edit",
+"+ Événement":"+ Event",
+"S’inscrire":"Sign up",
+"Organisateurs":"Organisers",
+"Déconnexion":"Log out",
+"Tableau de bord":"Dashboard",
+"Planning":"Schedule",
+"Bénévoles":"Volunteers",
+"Postes & créneaux":"Roles & shifts",
+"Voir le planning":"View schedule",
+
+/* liste des événements */
+"Cet événement n’existe pas ou a été supprimé. Choisissez-en un ci-dessous.":"This event does not exist or has been deleted. Choose one below.",
+"Cet événement n’existe pas ou a été supprimé.":"This event does not exist or has been deleted.",
+"{n} créneau":"{n} shift",
+"{n} créneaux":"{n} shifts",
+"{f}/{n} places pourvues":"{f}/{n} places filled",
+"terminé":"finished",
+"Aucun créneau pour l’instant.":"No shifts yet.",
+"Aucun planning publié pour l’instant.":"No schedule published yet.",
+"Commencez par créer votre festival : dates, lieu, puis vos postes et créneaux.":"Start by creating your festival: dates, venue, then your roles and shifts.",
+"Choisir mes créneaux":"Choose my shifts",
+"Aucune inscription ouverte pour l’instant.":"No sign-ups open yet.",
+
+/* bandeau d'appel */
+"Envie de donner un coup de main ?":"Want to lend a hand?",
+"Choisissez un créneau libre, il suffit de votre prénom et de votre nom.":"Pick a free shift; all we need is your first and last name.",
+"S’inscrire comme bénévole":"Sign up as a volunteer",
+
+/* tableau de bord */
+"Remplissage":"Coverage",
+"{f} places pourvues sur {n}":"{f} of {n} places filled",
+"Places à pourvoir":"Open places",
+"{n} créneau incomplet":"{n} shift not full",
+"{n} créneaux incomplets":"{n} shifts not full",
+"Bénévoles mobilisés":"Volunteers on the schedule",
+"sur {n} dans l’annuaire":"of {n} in the directory",
+"Heures planifiées":"Scheduled hours",
+"{h} par bénévole en moyenne":"{h} per volunteer on average",
+"{n} bénévole a des créneaux qui se chevauchent :":"{n} volunteer has overlapping shifts:",
+"{n} bénévoles ont des créneaux qui se chevauchent :":"{n} volunteers have overlapping shifts:",
+"manque {n}":"{n} missing",
+"+ {n} autres créneaux incomplets":"+ {n} more shifts not full",
+"Tous les créneaux sont pourvus.":"All shifts are filled.",
+"Aucun créneau pour l’instant. Ajoutez des postes et créneaux.":"No shifts yet. Add roles and shifts.",
+"Aucun poste.":"No roles.",
+"Contact bénévoles":"Volunteer contacts",
+"À pourvoir en priorité":"To fill first",
+"par ordre chronologique":"in chronological order",
+"Par poste":"By role",
+"Par jour":"By day",
+
+/* planning */
+"Définissez les dates de l’événement pour afficher le planning.":"Set the event dates to show the schedule.",
+"Créez d’abord des postes (bar, accueil, scène…) dans l’onglet Postes & créneaux.":"First create roles (bar, welcome desk, stage…) in the Roles & shifts tab.",
+"Aucun créneau le {d}.":"No shifts on {d}.",
+"Poste":"Role",
+"complet":"full",
+"partiel":"partial",
+"vide":"empty",
+"Un créneau qui commence avant 6h compte dans la nuit du jour affiché (ex. 00h–05h le 31/12 = nuit du 31 au 1er).":"A shift starting before 6 am belongs to the night of the day shown (e.g. 00:00–05:00 on 31/12 = night of the 31st to the 1st).",
+"Un créneau qui commence avant 6h compte dans la nuit du jour affiché.":"A shift starting before 6 am belongs to the night of the day shown.",
+"Affichage":"View",
+"Grille":"Grid",
+"Liste":"List",
+"+ Créneau":"+ Shift",
+"Resp.":"Lead",
+"resp.":"lead",
+
+/* bénévoles */
+"chevauchement":"overlap",
+"affecté":"assigned",
+"disponible":"available",
+"Annuaire":"Directory",
+"Rechercher":"Search",
+"Nom, compétence…":"Name, skill…",
+"Nom, téléphone, compétence…":"Name, phone, skill…",
+"Exporter CSV":"Export CSV",
+"Sauvegarde JSON":"JSON backup",
+"+ Bénévole":"+ Volunteer",
+"Bénévole":"Volunteer",
+"Contact":"Contact",
+"Créneaux":"Shifts",
+"Heures":"Hours",
+"T-shirt":"T-shirt",
+"État":"Status",
+"Aucun bénévole ne correspond à la recherche.":"No volunteer matches your search.",
+"Aucun bénévole. Ajoutez votre équipe.":"No volunteers. Add your team.",
+"Créneaux et heures comptés pour l’événement sélectionné ; les absents ne sont pas comptés.":"Shifts and hours counted for the selected event; absences are not counted.",
+"Bénévole supprimé":"Volunteer deleted",
+
+/* postes */
+"Aucun créneau.":"No shifts.",
+"+ Poste":"+ Role",
+"Aucun poste. Créez par exemple Bar, Accueil billetterie, Catering artistes, Parking…":"No roles. Create for example Bar, Ticket desk, Artist catering, Parking…",
+"Poste supprimé":"Role deleted",
+
+/* tiroirs */
+"Fermer":"Close",
+"Espace organisateurs":"Organisers' area",
+"Un mot de passe partagé pour toute l’équipe d’organisation.":"One shared password for the whole organising team.",
+"Mot de passe":"Password",
+"Se connecter":"Log in",
+"Aucun mot de passe administrateur n’est configuré. Renseignez admin_password_hash dans config.php.":"No admin password is configured. Set admin_password_hash in config.php.",
+"Statut":"Status",
+"Prévu":"Planned",
+"Présent":"Present",
+"Absent":"Absent",
+"Retirer":"Remove",
+"déjà occupé":"already busy",
+"{n}/{b} bénévoles":"{n}/{b} volunteers",
+"Équipe":"Team",
+"Personne n’est encore affecté.":"Nobody assigned yet.",
+"S’inscrire sur ce créneau ({n} place)":"Sign up for this shift ({n} place)",
+"S’inscrire sur ce créneau ({n} places)":"Sign up for this shift ({n} places)",
+"Ce créneau est complet.":"This shift is full.",
+"Affecter un bénévole":"Assign a volunteer",
+"Choisir…":"Choose…",
+"Affecter":"Assign",
+"Triés par heures déjà planifiées (les moins chargés d’abord). Les bénévoles déjà occupés sur cette plage sont grisés.":"Sorted by hours already scheduled (least busy first). Volunteers already busy at this time are greyed out.",
+"Tous les bénévoles de l’annuaire sont déjà sur ce créneau.":"Every volunteer in the directory is already on this shift.",
+"Modifier le créneau":"Edit shift",
+"Supprimer le créneau":"Delete shift",
+"Téléphone":"Phone",
+"E-mail":"Email",
+"{h} sur cet événement":"{h} at this event",
+"Notes":"Notes",
+"Créneaux sur {e}":"Shifts at {e}",
+"l’événement":"the event",
+"Aucun créneau pour l’instant. Ouvrez un créneau dans le Planning pour l’affecter.":"No shifts yet. Open a shift in the Schedule to assign them.",
+"Modifier la fiche":"Edit details",
+"Copier son planning":"Copy their schedule",
+
+/* formulaires */
+"Nouvel événement":"New event",
+"Modifier l’événement":"Edit event",
+"Événement créé":"Event created",
+"Nom de l’événement":"Event name",
+"Lieu":"Venue",
+"Ville, site":"Town, site",
+"Premier jour":"First day",
+"Dernier jour":"Last day",
+"Image / logo (adresse https)":"Image / logo (https address)",
+"adresse e-mail":"email address",
+"Déroulé (une étape par ligne, ex. « 20:00 Ouverture des portes »)":"Running order (one step per line, e.g. “20:00 Doors open”)",
+"Nouveau poste":"New role",
+"Modifier le poste":"Edit role",
+"Poste ajouté":"Role added",
+"Nom du poste":"Role name",
+"Bar principal":"Main bar",
+"Responsable":"Lead",
+"Prénom Nom":"First Last",
+"Couleur":"Colour",
+"Consignes":"Instructions",
+"Tenue, matériel, point de rendez-vous…":"Clothing, equipment, meeting point…",
+"Nouveau créneau":"New shift",
+"Créneau ajouté":"Shift added",
+"Jour (nuit comprise jusqu’à 6h)":"Day (night included until 6 am)",
+"Début":"Start",
+"Fin":"End",
+"Bénévoles nécessaires":"Volunteers needed",
+"Note":"Note",
+"Ex. : briefing 30 min avant":"E.g. briefing 30 min before",
+"Nouveau bénévole":"New volunteer",
+"Bénévole ajouté":"Volunteer added",
+"Prénom":"First name",
+"Nom":"Last name",
+"Téléphone et e-mail sont facultatifs mais recommandés : c’est plus simple pour vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.":"Phone and email are optional but recommended: it makes it easier to tell you about a change. Only organisers can see them.",
+"Taille de T-shirt":"T-shirt size",
+"Compétences":"Skills",
+"Permis B, PSC1, anglais, caisse…":"Driving licence, first aid, languages, till…",
+"Disponibilités, contraintes, allergies…":"Availability, constraints, allergies…",
+"Bleu":"Blue","Corail":"Coral","Vert":"Green","Violet":"Purple","Moutarde":"Mustard","Rose":"Pink","Cyan":"Cyan","Olive":"Olive",
+"La suppression retire aussi ses postes, créneaux et affectations.":"Deleting also removes its roles, shifts and assignments.",
+"La suppression retire aussi ses créneaux et leurs affectations.":"Deleting also removes its shifts and their assignments.",
+"La suppression retire aussi les affectations de ce créneau.":"Deleting also removes this shift's assignments.",
+"Créez d’abord un poste.":"Create a role first.",
+"Enregistrer":"Save",
+"Créer":"Create",
+"Supprimer":"Delete",
+"À compléter : {l}":"Please fill in: {l}",
+"Modifications enregistrées":"Changes saved",
+
+/* confirmations, messages */
+"Confirmer":"Confirm",
+"Confirmer ?":"Confirm?",
+"Confirmer la suppression":"Confirm deletion",
+"Confirmer (retire {n} affectation)":"Confirm (removes {n} assignment)",
+"Confirmer (retire {n} affectations)":"Confirm (removes {n} assignments)",
+"{n} affectation":"{n} assignment",
+"{n} affectations":"{n} assignments",
+"Créneau supprimé":"Shift deleted",
+"Supprimé":"Deleted",
+"Planning copié, prêt à envoyer par SMS ou e-mail.":"Schedule copied, ready to send by text or email.",
+"Planning copié.":"Schedule copied.",
+"Copie impossible dans cette vue.":"Cannot copy in this view.",
+"Copie impossible sur cet appareil.":"Cannot copy on this device.",
+"Choisissez un bénévole.":"Choose a volunteer.",
+"{b} affecté":"{b} assigned",
+"Retiré du créneau":"Removed from shift",
+"Statut mis à jour":"Status updated",
+"Connexion impossible.":"Could not log in.",
+"Chargement impossible.":"Could not load.",
+"Serveur injoignable. Vérifiez la connexion.":"Server unreachable. Check the connection.",
+"Serveur injoignable. Vérifiez votre connexion.":"Server unreachable. Check your connection.",
+"La base de données n’est pas disponible.":"The database is not available.",
+"Session expirée.":"Session expired.",
+"Enregistrement impossible pour le moment. Réessayez.":"Could not save right now. Please try again.",
+"Impossible de charger les données. Vérifiez la connexion puis rechargez la page.":"Could not load data. Check the connection, then reload the page.",
+
+/* page d'inscription */
+"Devenir bénévole":"Become a volunteer",
+"Choisissez un ou plusieurs créneaux libres : il suffit de votre prénom et de votre nom.":"Pick one or more free shifts: all we need is your first and last name.",
+"{n} créneau à pourvoir":"{n} shift to fill",
+"{n} créneaux à pourvoir":"{n} shifts to fill",
+"{n} place libre":"{n} place free",
+"{n} places libres":"{n} places free",
+"Vous êtes":"About you",
+"prenom@exemple.bzh":"name@example.org",
+"Vos prénom et nom apparaissent sur le planning public.":"Your first and last name appear on the public schedule.",
+"Mes créneaux":"My shifts",
+"Copier":"Copy",
+"Un empêchement ? Prévenez l’organisation":"Can't make it? Let the organisers know",
+"Tous":"All",
+"Tous les postes":"All roles",
+"Afficher les créneaux complets":"Show full shifts",
+"Inscrit·e ✓":"Signed up ✓",
+"Complet":"Full",
+"Déjà pris·e":"Already busy",
+"Je m’inscris":"Sign me up",
+"Aucun créneau libre avec ces filtres.":"No free shifts with these filters.",
+"Impossible de charger les créneaux. Réessayez dans un instant.":"Could not load shifts. Try again in a moment.",
+"Indiquez d’abord votre prénom et votre nom.":"Enter your first and last name first.",
+"Merci {p} ! Inscrit·e : {poste}, {quand}.":"Thank you {p}! Signed up: {poste}, {quand}.",
+"Inscription impossible. Réessayez.":"Sign-up failed. Please try again.",
+
+/* page contact */
+"Nous contacter":"Contact us",
+"Une question sur le bénévolat ? Écrivez-nous ou appelez-nous.":"A question about volunteering? Write to us or call us.",
+"Autres informations":"Other information",
+"Aucune information de contact pour l’instant.":"No contact information yet.",
+"Voir les coordonnées":"View contact details",
+"E-mail de contact":"Contact email",
+"Téléphone de contact":"Contact phone",
+"Autres informations de contact (une par ligne : adresse, site web, réseaux sociaux…)":"Other contact information (one per line: address, website, social media…)",
+
+/* éditeur de la page contact */
+"Modifier la page":"Edit page",
+"Gras":"Bold",
+"Italique":"Italic",
+"Titre":"Heading",
+"Liste à puces":"Bulleted list",
+"Liste numérotée":"Numbered list",
+"Lien":"Link",
+"Retirer le lien":"Remove link",
+"Effacer la mise en forme":"Clear formatting",
+"Mise en forme":"Formatting",
+"Texte de la page en {l}":"Page text in {l}",
+"breton":"Breton",
+"français":"French",
+"anglais":"English",
+"Pour modifier une autre version, changez de langue en haut de page (après avoir enregistré).":"To edit another version, switch language at the top of the page (after saving).",
+"Coordonnées":"Contact details",
+"Annuler":"Cancel",
+"Adresse du lien (https://…, mailto:… ou tel:…)":"Link address (https://…, mailto:… or tel:…)",
+"Adresse de lien invalide : utilisez https://, mailto: ou tel:":"Invalid link address: use https://, mailto: or tel:",
+"Texte trop long.":"Text too long.",
+
+/* messages du serveur (api.php, lib/db.php) */
+"Action inconnue.":"Unknown action.",
+"Adresse e-mail invalide.":"Invalid email address.",
+"Aucun mot de passe administrateur n'est configuré (voir config.php).":"No admin password is configured (see config.php).",
+"Ce bénévole est déjà sur ce créneau.":"This volunteer is already on this shift.",
+"Ce créneau est complet. Choisissez-en un autre.":"This shift is full. Choose another one.",
+"Ce créneau n’existe plus.":"This shift no longer exists.",
+"Couleur invalide.":"Invalid colour.",
+"Erreur de base de données.":"Database error.",
+"Identifiant manquant.":"Missing identifier.",
+"Il faut au moins 1 bénévole.":"At least 1 volunteer is needed.",
+"Indiquez un prénom et un nom valides (60 caractères max).":"Enter a valid first and last name (60 characters max).",
+"JSON invalide.":"Invalid JSON.",
+"Jour invalide.":"Invalid day.",
+"L'adresse de l'image doit commencer par https://":"The image address must start with https://",
+"Le dernier jour doit suivre le premier.":"The last day must come after the first.",
+"Le début et la fin doivent être différents.":"Start and end must be different.",
+"Le lien du Google Sheet doit commencer par https://":"The Google Sheet link must start with https://",
+"Mot de passe incorrect.":"Incorrect password.",
+"Numéro de téléphone invalide.":"Invalid phone number.",
+"Rien à modifier.":"Nothing to change.",
+"Réservé aux organisateurs : connectez-vous.":"Organisers only: please log in.",
+"Session expirée : rechargez la page.":"Session expired: reload the page.",
+"Statut invalide.":"Invalid status.",
+"Table non autorisée.":"Table not allowed.",
+"Taille invalide.":"Invalid size.",
+"Trop d’inscriptions depuis cet appareil. Contactez l’organisation.":"Too many sign-ups from this device. Contact the organisers.",
+"Valeur refusée par la base.":"Value rejected by the database.",
+"Vous êtes déjà inscrit·e sur ce créneau.":"You are already signed up for this shift.",
+"Vous êtes déjà inscrit·e à la même heure : {poste} ({debut}–{fin}).":"You are already signed up at the same time: {poste} ({debut}–{fin}).",
+"Élément introuvable (supprimé entre-temps ?).":"Item not found (deleted in the meantime?).",
+"Élément lié introuvable (supprimé entre-temps ?).":"Linked item not found (deleted in the meantime?).",
+"L'extension PHP pdo_sqlite n'est pas activée sur cet hébergement.":"The PHP pdo_sqlite extension is not enabled on this host.",
+"Impossible de créer le dossier data/. Créez-le et rendez-le inscriptible (chmod 775).":"Cannot create the data/ folder. Create it and make it writable (chmod 775).",
+"Le dossier data/ n'est pas inscriptible par PHP. Donnez-lui les droits d'écriture (chmod 775 ou 777 selon l'hébergeur).":"PHP cannot write to the data/ folder. Give it write permission (chmod 775 or 777 depending on the host)."
+};
+
 function fill(s,vars){return vars?s.replace(/\{(\w+)\}/g,(m,k)=>vars[k]!=null?vars[k]:m):s}
-function t(s,vars){return fill(lang==='br'&&BR[s]!=null?BR[s]:s,vars)}
+const DICT={br:BR,en:EN}[lang]||{};
+function t(s,vars){return fill(DICT[s]!=null?DICT[s]:s,vars)}
 function tn(n,one,many,vars){return t(n>1?many:one,Object.assign({n},vars||{}))}
 
-/* dates : Intl pour le français ; noms bretons écrits à la main (les navigateurs ne connaissent pas tous « br ») */
+/* dates : Intl pour le français et l'anglais ; noms bretons écrits à la main (les navigateurs ne connaissent pas tous « br ») */
 const BR_D=['Sul','Lun','Meurzh',"Merc'her",'Yaou','Gwener','Sadorn'];
 const BR_DS=['Sul','Lun','Meu.','Mer.','Yaou','Gwe.','Sad.'];
 const BR_M=['Genver',"C'hwevrer",'Meurzh','Ebrel','Mae','Mezheven','Gouere','Eost','Gwengolo','Here','Du','Kerzu'];
@@ -343,7 +665,7 @@ const BR_MS=['Gen.',"C'hwe.",'Meur.','Ebr.','Mae','Mezh.','Goue.','Eost','Gwen.'
 function fmtDay(j,o){
   o=o||{weekday:'long',day:'numeric',month:'long'};
   const d=new Date(j+'T12:00:00');if(isNaN(d))return j;
-  if(lang!=='br'){try{return d.toLocaleDateString('fr-FR',o)}catch(e){return j}}
+  if(lang!=='br'){try{return d.toLocaleDateString(lang==='en'?'en-GB':'fr-FR',o)}catch(e){return j}}
   const p=[];
   if(o.weekday)p.push((o.weekday==='short'?BR_DS:BR_D)[d.getDay()]);
   if(o.day)p.push(d.getDate());

@@ -57,7 +57,7 @@ function db(): PDO
 function migrate(PDO $pdo): void
 {
     $cols = array_column($pdo->query('PRAGMA table_info(events)')->fetchAll(), 'name');
-    foreach (['image_url', 'contact_tel', 'contact_infos', 'contact_html', 'contact_html_br'] as $c) {
+    foreach (['image_url', 'contact_tel', 'contact_infos', 'contact_html', 'contact_html_br', 'contact_html_en'] as $c) {
         if (!in_array($c, $cols, true)) $pdo->exec("ALTER TABLE events ADD COLUMN $c TEXT");
     }
 }
