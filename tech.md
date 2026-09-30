@@ -136,7 +136,7 @@ Le front recharge `action=all` toutes les 15 à 20 s et après chaque écriture.
 - État dans un objet `S`, une fonction de rendu par vue (`rDash()`, `rPlan()`…) qui reconstruit le HTML de la zone concernée. Assez rapide pour quelques centaines d'éléments.
 - Données de démarrage injectées par PHP (`window.BOOT = {csrf, admin, …}`) pour éviter une requête supplémentaire.
 - **Mobile d'abord** pour les pages publiques ; mise en page CSS Grid/Flex, points de rupture simples (ex. 980 px et 560 px), pas de défilement horizontal.
-- Couleurs en variables CSS sur `:root`, thème sombre via `prefers-color-scheme`.
+- Couleurs en variables CSS sur `:root`. Thème clair uniquement (le thème sombre automatique a été retiré).
 - Polices Google Fonts, rien d'autre de chargé depuis l'extérieur.
 - Préférences d'affichage (vue, langue) en `localStorage`, toujours dans un `try/catch`.
 - Contexte dans l'URL (`?event=<id>`, `?lang=br`) : liens partageables, bouton retour qui marche.

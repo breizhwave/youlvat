@@ -9,7 +9,7 @@ Il est d'abord né sous forme de prototype claude.ai (voir `reference/ui-prototy
   - Rejeté : fichiers JSON (écritures concurrentes risquées le soir J), MySQL (trop de friction à chaque migration), Supabase (dépendance externe, pause des projets gratuits après 7 jours d'inactivité).
   - Écrire du SQL standard pour garder une porte de sortie vers MySQL (DSN dans `config.php`).
 - **Données privées limitées** : les noms des bénévoles sont publics. Le téléphone et l'e-mail sont facultatifs (mais recommandés) et ne sont visibles que par les organisateurs. Les formulaires l'indiquent.
-- **L'interface du prototype plaît** : la réutiliser telle quelle (HTML/CSS/JS vanilla, polices Google Fonts, thèmes clair/sombre). Seule la couche de données change.
+- **L'interface du prototype plaît** : la réutiliser telle quelle (HTML/CSS/JS vanilla, polices Google Fonts), mais en **thème clair uniquement** : le thème sombre (qui suivait le réglage du téléphone) a été retiré. Seule la couche de données change.
 - Le Google Sheet d'origine n'est plus affiché ni modifiable dans l'interface. La colonne `sheet_url` est conservée en base (données historiques).
 - **Choix de l'événement par l'URL** : `index.php?event=<id>` et `inscription.php?event=<id>`. Sans paramètre (ou avec un id inconnu), on affiche seulement la liste des événements. Le sélecteur de l'en-tête recharge la page avec le bon `?event=`.
 - **Image par événement** : `events.image_url` (https uniquement), affichée à côté du sélecteur et sur les cartes de la liste. La colonne est ajoutée automatiquement aux bases existantes (`migrate()` dans `lib/db.php`).
