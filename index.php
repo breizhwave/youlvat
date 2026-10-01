@@ -50,8 +50,8 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
   </div>
   <nav class="wrap tabs" role="tablist" aria-label="Sections">
-    <button class="tab" role="tab" data-tab="dash" type="button" data-i18n="Tableau de bord">Tableau de bord</button>
     <button class="tab" role="tab" data-tab="plan" type="button" data-i18n="Planning">Planning</button>
+    <button class="tab" role="tab" data-tab="dash" type="button" data-i18n="Tableau de bord">Tableau de bord</button>
     <button class="tab" role="tab" data-tab="bens" type="button" data-i18n="Bénévoles">Bénévoles</button>
     <button class="tab" role="tab" data-tab="postes" type="button" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</button>
     <a class="tab" id="contactTab" href="contact.php" data-i18n="Contact">Contact</a>
@@ -70,8 +70,7 @@ I18N.applyStatic();
 const COLORS=['#3B6FD8','#D8573B','#2E9E7A','#9B59C7','#C99A1A','#D44C8C','#3E98B3','#7A8B2E'];
 const COLS={events:'events',postes:'postes',creneaux:'creneaux',benevoles:'benevoles',affs:'affectations'};
 const STATUTS=[['prevu',t('Prévu')],['present',t('Présent')],['absent',t('Absent')]];
-const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],eventId:null,tab:'dash',day:null,q:'',ro:true};
-S.eventId=new URLSearchParams(location.search).get('event')||null; /* l'événement vient de l'URL uniquement */
+const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],eventId:null,tab:'plan',day:null,dayPinned:false,q:'',ro:true};
 const DR={kind:null,id:null,extra:null};
 const CFG=window.REGIE||{};
 const REFRESH_MS=15000;
@@ -80,7 +79,25 @@ let db=false,lastSnap='';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-S.tab=ls.get('rb.tab')||'dash';
+/* l'événement, l'onglet et le jour viennent de l'URL (?event=…&tab=…&day=…) : liens partageables, favoris, bouton retour.
+   Sans tab, on ouvre le planning. */
+const TABS=['plan','dash','bens','postes'];
+function readUrl(){
+  const q=new URLSearchParams(location.search);
+  S.eventId=q.get('event')||null;
+  S.tab=TABS.includes(q.get('tab'))?q.get('tab'):'plan';
+  const d=q.get('day');S.dayPinned=/^\d{4}-\d{2}-\d{2}$/.test(d||'');S.day=S.dayPinned?d:null;
+}
+readUrl();
+function pageUrl(){
+  const q=new URLSearchParams(location.search);
+  q.delete('tab');q.delete('day');
+  if(S.tab!=='plan')q.set('tab',S.tab);
+  else if(S.dayPinned&&S.day)q.set('day',S.day);
+  const s=q.toString();return location.pathname+(s?'?'+s:'');
+}
+function go(){const u=pageUrl();if(u!==location.pathname+location.search)history.pushState(null,'',u);render()}
+addEventListener('popstate',()=>{readUrl();render()});
 /* vue du planning : liste par défaut sur téléphone, grille sinon ; le choix est mémorisé */
 S.view=ls.get('rb.view')||(window.matchMedia&&matchMedia('(max-width:560px)').matches?'list':'grid');
 
@@ -109,7 +126,7 @@ const affsOf=cid=>S.affs.filter(a=>a.creneauId===cid);
 const actifs=cid=>affsOf(cid).filter(a=>a.statut!=='absent');
 const pColor=p=>COLORS[((p&&p.couleur)||0)%COLORS.length];
 const statutLab=a=>(STATUTS.find(s=>s[0]===(a.statut||'prevu'))||STATUTS[0])[1];
-const evUrl=id=>location.pathname+(id?'?event='+encodeURIComponent(id):'');
+const evUrl=id=>location.pathname+(id?'?event='+encodeURIComponent(id)+(S.tab!=='plan'?'&tab='+S.tab:''):'');
 const signupUrl=cid=>'inscription.php?event='+encodeURIComponent(S.eventId||'')+(cid?'#c-'+encodeURIComponent(cid):'');
 const bName=b=>b?((b.prenom||'')+' '+(b.nom||'')).trim():t('Bénévole supprimé');
 const posteNom=p=>p?p.nom:t('Poste supprimé');
@@ -167,7 +184,7 @@ function render(){
   if(!db&&render.noDb){m.innerHTML=`<div class="notice">${t('Impossible de charger les données. Vérifiez la connexion puis rechargez la page.')}</div>`;return}
   if(!db){m.innerHTML=`<div class="empty">${t('Chargement des données…')}</div>`;return}
   if(!ev()){m.innerHTML=rList();return}
-  const html={dash:rDash,plan:rPlan,bens:rBens,postes:rPostes}[S.tab]||rDash;
+  const html={dash:rDash,plan:rPlan,bens:rBens,postes:rPostes}[S.tab]||rPlan;
   const ro=S.ro&&(S.tab==='dash'||S.tab==='plan')?`<div class="panel cta"><p><b>${t('Envie de donner un coup de main ?')}</b> <span class="muted">${t('Choisissez un créneau libre, il suffit de votre prénom et de votre nom.')}</span></p><a class="btn pri" href="${esc(signupUrl())}">${t('S’inscrire comme bénévole')}</a></div>`:'';
   m.innerHTML=ro+html();
   if(S.tab==='bens'){const q=$('#q');if(q&&render.focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
@@ -235,7 +252,7 @@ function rDash(){
 function rPlan(){
   const days=eventDays();
   if(!days.length)return `<div class="panel empty">${t('Définissez les dates de l’événement pour afficher le planning.')}</div>`;
-  if(!S.day||!days.includes(S.day)){const cnt=d=>C().filter(c=>c.jour===d).length;S.day=days.reduce((b,d)=>cnt(d)>cnt(b)?d:b,days[0])}
+  if(!S.day||!days.includes(S.day)){S.dayPinned=false;const cnt=d=>C().filter(c=>c.jour===d).length;S.day=days.reduce((b,d)=>cnt(d)>cnt(b)?d:b,days[0])}
   const chips=days.map(d=>{const n=C().filter(c=>c.jour===d).length;return `<button type="button" class="chip" aria-pressed="${d===S.day}" data-act="day" data-id="${d}">${esc(shortDay(d))}<small class="num">${n}</small></button>`}).join('');
   const cs=C().filter(c=>c.jour===S.day);const ps=P();
   let body;
@@ -418,12 +435,12 @@ function planText(b){const e=ev();return `${bName(b)} – ${e?e.nom:''}\n`+shift
 document.addEventListener('click',async ev0=>{
   if(ev0.target.closest('a[href]:not([data-act])'))return; /* vrai lien (ex. S'inscrire dans une ligne cliquable) */
   const el=ev0.target.closest('[data-act],.tab');if(!el)return;
-  if(el.classList.contains('tab')){S.tab=el.dataset.tab;ls.set('rb.tab',S.tab);render();return}
+  if(el.classList.contains('tab')){S.tab=el.dataset.tab;go();return}
   const act=el.dataset.act,id=el.dataset.id;
   if(el.tagName==='A')ev0.preventDefault();
   switch(act){
     case 'close':closeDr();break;
-    case 'day':S.day=id;render();break;
+    case 'day':S.day=id;S.dayPinned=true;go();break;
     case 'view':S.view=id;ls.set('rb.view',id);render();break;
     case 'cren':openDr('cren',id);break;
     case 'ben':openDr('ben',id);break;

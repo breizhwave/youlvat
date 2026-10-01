@@ -12,6 +12,7 @@ Il est d'abord né sous forme de prototype claude.ai (voir `reference/ui-prototy
 - **L'interface du prototype plaît** : la réutiliser telle quelle (HTML/CSS/JS vanilla, polices Google Fonts), mais en **thème clair uniquement** : le thème sombre (qui suivait le réglage du téléphone) a été retiré. Seule la couche de données change.
 - Le Google Sheet d'origine n'est plus affiché ni modifiable dans l'interface. La colonne `sheet_url` est conservée en base (données historiques).
 - **Choix de l'événement par l'URL** : `index.php?event=<id>` et `inscription.php?event=<id>`. Sans paramètre (ou avec un id inconnu), on affiche seulement la liste des événements. Le sélecteur de l'en-tête recharge la page avec le bon `?event=`.
+- **Onglets et jour dans l'URL** : `index.php?event=<id>&tab=dash|bens|postes` et, pour le planning, `&day=AAAA-MM-JJ`. Sans `tab`, la page s'ouvre sur le **Planning** (premier onglet). Changer d'onglet ou de jour met l'URL à jour (`history.pushState`), le bouton retour fonctionne. L'onglet n'est plus mémorisé dans `localStorage`.
 - **Image par événement** : `events.image_url` (https uniquement), affichée à côté du sélecteur et sur les cartes de la liste. La colonne est ajoutée automatiquement aux bases existantes (`migrate()` dans `lib/db.php`).
 - **Consultation publique** : tout le monde voit le planning (`index.php`) sans compte, sur ordinateur comme sur téléphone. Sans session admin, l'API retire `tel`, `email` et `notes` des bénévoles.
 - **Un seul compte partagé** pour administrer (mot de passe dans `config.php`). Pas de comptes par responsable de stand. Tant que `admin_password_hash` est vide, personne ne peut administrer.
@@ -72,7 +73,7 @@ Les tables sont `events` → `postes` → `creneaux` → `affectations` ← `ben
 3. **Chevauchements** : on signale un bénévole placé sur deux créneaux qui se recouvrent (les absents sont ignorés). Dans la liste des candidats à affecter, les bénévoles déjà occupés sont grisés.
 4. **Candidats** : ils sont triés par nombre d'heures déjà planifiées, du plus petit au plus grand, pour équilibrer la charge.
 5. **Pointage le jour J** : chaque affectation a un statut `prevu` / `present` / `absent`.
-6. **Planning** : l'onglet s'ouvre par défaut sur le jour qui compte le plus de créneaux. Deux vues au choix, mémorisées (`rb.view`) : **Grille** (frise horaire, seulement les postes qui ont des créneaux ce jour-là) et **Liste** (créneaux regroupés par poste, comme sur `inscription.php`), qui est la vue par défaut sur téléphone.
+6. **Planning** : c'est l'onglet affiché à l'ouverture. Sans `?day=`, il s'ouvre sur le jour qui compte le plus de créneaux. Deux vues au choix, mémorisées (`rb.view`) : **Grille** (frise horaire, seulement les postes qui ont des créneaux ce jour-là) et **Liste** (créneaux regroupés par poste, comme sur `inscription.php`), qui est la vue par défaut sur téléphone.
 7. **Déroulé de la soirée** : c'est le champ texte `events.deroule`, avec une ligne par étape au format `HH:MM Libellé`.
 
 ## Données à importer
