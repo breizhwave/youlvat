@@ -2,6 +2,8 @@
 
 LOGICIEL DE GESTION DES BENEVOLES POUR EVENEMENTS FESTIFS — volunteer scheduling for festivals and events.
 
+![YOUL VAT volunteer management](https://ik.imagekit.io/breizhwave/cms/webmasterbulletin/volonteer-management.jpg)
+
 Trilingue brezhoneg / français / English (`?lang=br|fr|en`).
 
 PHP 8 + SQLite, no framework, no Composer, no build step: upload the folder by FTP and open it.
