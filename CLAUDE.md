@@ -28,7 +28,7 @@ Il est d'abord né sous forme de prototype claude.ai (voir `reference/ui-prototy
 - Le site de production (`youlvat.kalanna.bzh`) passe par Cloudflare, qui garde les fichiers statiques 4 h : `assets/app.css` et `assets/i18n.js` sont appelés avec `?v=<?= filemtime(…) ?>` pour qu'une nouvelle version soit prise tout de suite. Garder ce suffixe sur tout nouveau fichier statique.
 - La base est créée automatiquement au premier lancement à partir de `database/schema.sql`.
 - Pour chaque connexion PDO : `PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;`
-- Le dossier `data/` (qui contient `regie.sqlite`) est protégé par un `.htaccess` (`Require all denied` + fallback `Deny from all`) et un `index.php` vide. Si `data/` n'est pas inscriptible, l'app doit l'expliquer clairement.
+- Les dossiers `data/` (qui contient `regie.sqlite`) et `database/` (schéma et seed) sont protégés par un `.htaccess` (`Require all denied` + fallback `Deny from all`) et un `index.php` vide. `protect_dir()` (`lib/db.php`) recrée ceux de `data/` s'ils manquent sur le serveur. Si `data/` n'est pas inscriptible, l'app doit l'expliquer clairement.
 - Requêtes préparées uniquement. Réponses JSON en UTF-8 (`JSON_UNESCAPED_UNICODE`).
 
 ## Arborescence visée

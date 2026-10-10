@@ -28,7 +28,7 @@ header('Content-Type: text/html; charset=utf-8');
   <div class="wrap band-in">
     <div class="brand">
       <a class="mark" href="./" title="Tous les événements" data-i18n-title="Tous les événements">YV</a>
-      <div class="brand-t" data-i18n="YOUL VAT - Régie Bénévoles">YOUL VAT - Régie Bénévoles</div>
+      <div class="brand-t">YOUL VAT<small data-i18n="Régie Bénévoles">Régie Bénévoles</small></div>
     </div>
     <div class="evcenter">
       <img id="evImg" class="evimg" alt="" hidden>

@@ -17,7 +17,6 @@ document.documentElement.lang=lang;
 
 const BR={
 /* en-tête, navigation */
-"YOUL VAT - Régie Bénévoles":"YOUL VAT - Merañ ar skoazellerien",
 "Régie Bénévoles":"Merañ ar skoazellerien",
 "Inscription bénévoles":"Enskrivadur ar skoazellerien",
 "Tous les événements":"An holl zarvoudoù",
@@ -350,7 +349,6 @@ const BR={
 /* English: same French keys. Keep it in sync with BR. */
 const EN={
 /* en-tête, navigation */
-"YOUL VAT - Régie Bénévoles":"YOUL VAT - Volunteer Manager",
 "Régie Bénévoles":"Volunteer Manager",
 "Inscription bénévoles":"Volunteer sign-up",
 "Tous les événements":"All events",

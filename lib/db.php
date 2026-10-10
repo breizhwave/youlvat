@@ -10,6 +10,14 @@ function config(): array
 
 class DbSetupError extends RuntimeException {}
 
+// Interdit le téléchargement direct du dossier (base SQLite) : recrée .htaccess et index.php s'ils manquent.
+function protect_dir(string $dir): void
+{
+    $ht = "<IfModule mod_authz_core.c>\n  Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n  Order allow,deny\n  Deny from all\n</IfModule>\n";
+    if (!is_file("$dir/.htaccess")) @file_put_contents("$dir/.htaccess", $ht);
+    if (!is_file("$dir/index.php")) @file_put_contents("$dir/index.php", "<?php\n");
+}
+
 function db(): PDO
 {
     static $pdo = null;
@@ -32,6 +40,7 @@ function db(): PDO
             throw new DbSetupError("Le dossier data/ n'est pas inscriptible par PHP. Donnez-lui les droits d'écriture (chmod 775 ou 777 selon l'hébergeur).");
         }
         $fresh = !file_exists($file) || filesize($file) === 0;
+        protect_dir($dir);
     }
 
     $pdo = new PDO($cfg['dsn'], $cfg['db_user'], $cfg['db_pass'], [
