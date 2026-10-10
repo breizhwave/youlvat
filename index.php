@@ -60,7 +60,7 @@ header('Content-Type: text/html; charset=utf-8');
   </nav>
   <div class="tabacts">
     <a class="btn pri sm" id="signupLink" href="inscription.php" data-i18n="S’inscrire">S’inscrire</a>
-    <a class="btn danger fill sm" id="changeLink" href="contact.php" hidden data-i18n="Changer / me désister">Changer / me désister</a>
+    <a class="btn danger fill sm" id="changeLink" href="contact.php" data-i18n="Changer / me désister">Changer / me désister</a>
   </div>
   </div>
 </header>
@@ -542,7 +542,7 @@ async function poll(){
 }
 async function boot(){
   S.ro=!CFG.admin;
-  $('#logout').hidden=S.ro;$('#login').hidden=!S.ro;$('#signupLink').hidden=$('#changeLink').hidden=!S.ro;
+  $('#logout').hidden=S.ro;$('#login').hidden=!S.ro;
   if(CFG.setupError){render();return}
   try{await load()}catch(e){render.noDb=true;toast((e&&e.message)||t('Chargement impossible.'))}
   render();
