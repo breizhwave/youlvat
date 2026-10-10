@@ -54,7 +54,7 @@ const BR={
 
 /* bandeau d'appel */
 "Envie de donner un coup de main ?":"C'hoant ho peus da reiñ un taol-dorn ?",
-"Choisissez un créneau libre, il suffit de votre prénom et de votre nom.":"Dibabit ur prantad dieub : ho anv-bihan hag hoc'h anv-familh a-walc'h.",
+"Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.":"Dibabit ur prantad dieub ha roit deomp hoc'h anv, hoc'h niverenn bellgomz hag ho postel.",
 "S’inscrire comme bénévole":"En em enskrivañ evel skoazeller",
 
 /* tableau de bord */
@@ -195,6 +195,7 @@ const BR={
 "Bénévole ajouté":"Skoazeller ouzhpennet",
 "Prénom":"Anv-bihan",
 "Nom":"Anv-familh",
+"Téléphone et e-mail sont obligatoires : ils servent à vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.":"Ret eo reiñ ar pellgomz hag ar postel : talvezout a reont d'ho kelaouiñ ma vez ur cheñchamant. N'int gwelet nemet gant an aozerien.",
 "Téléphone et e-mail sont facultatifs mais recommandés : c’est plus simple pour vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.":"N'eo ket ret ar pellgomz hag ar postel, met erbedet int : aesoc'h eo evit ho kelaouiñ ma vez ur cheñchamant. N'int gwelet nemet gant an aozerien.",
 "Taille de T-shirt":"Ment an T-shirt",
 "Compétences":"Barregezhioù",
@@ -240,7 +241,7 @@ const BR={
 
 /* page d'inscription */
 "Devenir bénévole":"Bezañ skoazeller",
-"Choisissez un ou plusieurs créneaux libres : il suffit de votre prénom et de votre nom.":"Dibabit ur prantad dieub pe meur a hini : ho anv-bihan hag hoc'h anv-familh a-walc'h.",
+"Choisissez un ou plusieurs créneaux libres, en indiquant vos prénom, nom, téléphone et e-mail.":"Dibabit ur prantad dieub pe meur a hini, en ur reiñ hoc'h anv-bihan, hoc'h anv-familh, hoc'h niverenn bellgomz hag ho postel.",
 "{n} créneau à pourvoir":"{n} prantad da leuniañ",
 "{n} créneaux à pourvoir":"{n} prantad da leuniañ",
 "{n} place libre":"{n} plas vak",
@@ -258,9 +259,22 @@ const BR={
 "Complet":"Leun",
 "Déjà pris·e":"Ac'hubet dija",
 "Je m’inscris":"En em enskrivañ",
+"Pour des raisons d’organisation, veuillez nous contacter si vous souhaitez changer de créneau ou êtes contraint·e de vous désister, en utilisant le bouton rouge.":"Evit aozañ an traoù, mar fell deoc'h cheñch prantad pe mar rankit en em dennañ, kit e darempred ganeomp gant ar bouton ruz.",
+"Changer / me désister":"Cheñch / en em dennañ",
+"Retrouver une inscription":"Kavout un enskrivadur",
+"Prénom, nom, e-mail ou téléphone":"Anv-bihan, anv-familh, postel pe pellgomz",
+"Recherche…":"O klask…",
+"Aucun bénévole trouvé.":"N'eus bet kavet skoazeller ebet.",
+"Pour retrouver une inscription par e-mail ou téléphone, saisissez-les en entier.":"Evit kavout un enskrivadur dre bostel pe dre bellgomz, skrivit anezho en o fezh.",
+"Aucune inscription sur cet événement.":"Enskrivadur ebet war an darvoud-mañ.",
+"+ {n} autres":"+ {n} all",
+"Recherche impossible.":"N'eus ket bet gallet klask.",
+"Trop de recherches depuis cet appareil. Réessayez plus tard.":"Re a glaskoù diwar ar benveg-mañ. Klaskit en-dro diwezhatoc'h.",
+"Saisissez une adresse e-mail ou un numéro de téléphone complet.":"Skrivit ur chomlec'h postel pe un niverenn bellgomz klok.",
+"Le téléphone et l’e-mail sont obligatoires.":"Ret eo reiñ an niverenn bellgomz hag ar postel.",
 "Aucun créneau libre avec ces filtres.":"Prantad dieub ebet gant ar siloù-mañ.",
 "Impossible de charger les créneaux. Réessayez dans un instant.":"N'haller ket kargañ ar prantadoù. Klaskit en-dro a-benn ur pennadig.",
-"Indiquez d’abord votre prénom et votre nom.":"Roit hoc'h anv-bihan hag hoc'h anv-familh da gentañ.",
+"Indiquez d’abord vos prénom, nom, téléphone et e-mail.":"Roit hoc'h anv-bihan, hoc'h anv-familh, hoc'h niverenn bellgomz hag ho postel da gentañ.",
 "Merci {p} ! Inscrit·e : {poste}, {quand}.":"Trugarez {p} ! Enskrivet : {poste}, {quand}.",
 "Inscription impossible. Réessayez.":"N'haller ket en em enskrivañ. Klaskit en-dro.",
 
@@ -373,7 +387,7 @@ const EN={
 
 /* bandeau d'appel */
 "Envie de donner un coup de main ?":"Want to lend a hand?",
-"Choisissez un créneau libre, il suffit de votre prénom et de votre nom.":"Pick a free shift; all we need is your first and last name.",
+"Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.":"Pick a free shift and leave us your name, phone and email.",
 "S’inscrire comme bénévole":"Sign up as a volunteer",
 
 /* tableau de bord */
@@ -514,6 +528,7 @@ const EN={
 "Bénévole ajouté":"Volunteer added",
 "Prénom":"First name",
 "Nom":"Last name",
+"Téléphone et e-mail sont obligatoires : ils servent à vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.":"Phone and email are required: we use them to tell you about any change. Only organisers can see them.",
 "Téléphone et e-mail sont facultatifs mais recommandés : c’est plus simple pour vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.":"Phone and email are optional but recommended: it makes it easier to tell you about a change. Only organisers can see them.",
 "Taille de T-shirt":"T-shirt size",
 "Compétences":"Skills",
@@ -559,7 +574,7 @@ const EN={
 
 /* page d'inscription */
 "Devenir bénévole":"Become a volunteer",
-"Choisissez un ou plusieurs créneaux libres : il suffit de votre prénom et de votre nom.":"Pick one or more free shifts: all we need is your first and last name.",
+"Choisissez un ou plusieurs créneaux libres, en indiquant vos prénom, nom, téléphone et e-mail.":"Pick one or more free shifts, giving your first name, last name, phone and email.",
 "{n} créneau à pourvoir":"{n} shift to fill",
 "{n} créneaux à pourvoir":"{n} shifts to fill",
 "{n} place libre":"{n} place free",
@@ -577,9 +592,22 @@ const EN={
 "Complet":"Full",
 "Déjà pris·e":"Already busy",
 "Je m’inscris":"Sign me up",
+"Pour des raisons d’organisation, veuillez nous contacter si vous souhaitez changer de créneau ou êtes contraint·e de vous désister, en utilisant le bouton rouge.":"For organisational reasons, if you want to change shift or have to withdraw, please contact us using the red button.",
+"Changer / me désister":"Change / withdraw",
+"Retrouver une inscription":"Find a sign-up",
+"Prénom, nom, e-mail ou téléphone":"First name, last name, email or phone",
+"Recherche…":"Searching…",
+"Aucun bénévole trouvé.":"No volunteer found.",
+"Pour retrouver une inscription par e-mail ou téléphone, saisissez-les en entier.":"To find a sign-up by email or phone, type it in full.",
+"Aucune inscription sur cet événement.":"No sign-ups for this event.",
+"+ {n} autres":"+ {n} more",
+"Recherche impossible.":"Search failed.",
+"Trop de recherches depuis cet appareil. Réessayez plus tard.":"Too many searches from this device. Try again later.",
+"Saisissez une adresse e-mail ou un numéro de téléphone complet.":"Enter a full email address or phone number.",
+"Le téléphone et l’e-mail sont obligatoires.":"Phone and email are required.",
 "Aucun créneau libre avec ces filtres.":"No free shifts with these filters.",
 "Impossible de charger les créneaux. Réessayez dans un instant.":"Could not load shifts. Try again in a moment.",
-"Indiquez d’abord votre prénom et votre nom.":"Enter your first and last name first.",
+"Indiquez d’abord vos prénom, nom, téléphone et e-mail.":"Enter your first name, last name, phone and email first.",
 "Merci {p} ! Inscrit·e : {poste}, {quand}.":"Thank you {p}! Signed up: {poste}, {quand}.",
 "Inscription impossible. Réessayez.":"Sign-up failed. Please try again.",
 

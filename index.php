@@ -43,19 +43,26 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
     <div class="evpick">
       <button class="btn band-btn sm adm" id="evNew" type="button" data-i18n="+ Événement">+ Événement</button>
-      <a class="btn pri sm" id="signupLink" href="inscription.php" data-i18n="S’inscrire">S’inscrire</a>
-      <button class="btn band-btn sm" id="login" type="button" hidden data-i18n="Organisateurs">Organisateurs</button>
-      <button class="btn band-btn sm" id="logout" type="button" hidden data-i18n="Déconnexion">Déconnexion</button>
-      <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
+      <div class="evpick-col">
+        <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
+        <button class="btn band-btn sm" id="login" type="button" hidden data-i18n="Organisateurs">Organisateurs</button>
+        <button class="btn band-btn sm" id="logout" type="button" hidden data-i18n="Déconnexion">Déconnexion</button>
+      </div>
     </div>
   </div>
-  <nav class="wrap tabs" role="tablist" aria-label="Sections">
+  <div class="wrap tabrow">
+  <nav class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" data-tab="plan" type="button" data-i18n="Planning">Planning</button>
     <button class="tab" role="tab" data-tab="dash" type="button" data-i18n="Tableau de bord">Tableau de bord</button>
     <button class="tab" role="tab" data-tab="bens" type="button" data-i18n="Bénévoles">Bénévoles</button>
     <button class="tab" role="tab" data-tab="postes" type="button" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</button>
     <a class="tab" id="contactTab" href="contact.php" data-i18n="Contact">Contact</a>
   </nav>
+  <div class="tabacts">
+    <a class="btn pri sm" id="signupLink" href="inscription.php" data-i18n="S’inscrire">S’inscrire</a>
+    <a class="btn danger fill sm" id="changeLink" href="contact.php" hidden data-i18n="Changer / me désister">Changer / me désister</a>
+  </div>
+  </div>
 </header>
 <main class="wrap" id="main"><div class="empty" data-i18n="Chargement des données…">Chargement des données…</div></main>
 <div id="scrim" hidden></div>
@@ -70,7 +77,7 @@ I18N.applyStatic();
 const COLORS=['#3B6FD8','#D8573B','#2E9E7A','#9B59C7','#C99A1A','#D44C8C','#3E98B3','#7A8B2E'];
 const COLS={events:'events',postes:'postes',creneaux:'creneaux',benevoles:'benevoles',affs:'affectations'};
 const STATUTS=[['prevu',t('Prévu')],['present',t('Présent')],['absent',t('Absent')]];
-const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],eventId:null,tab:'plan',day:null,dayPinned:false,q:'',ro:true};
+const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],eventId:null,tab:'plan',day:null,dayPinned:false,q:'',pq:'',pres:null,ro:true};
 const DR={kind:null,id:null,extra:null};
 const CFG=window.REGIE||{};
 const REFRESH_MS=15000;
@@ -171,9 +178,9 @@ function renderHeader(){
   sel.disabled=!S.events.length;$('#evEdit').hidden=!e;
   const img=$('#evImg');const iu=evImgUrl(e);img.hidden=!iu;if(iu&&img.getAttribute('src')!==iu)img.src=iu;
   $('#signupLink').href=signupUrl();
-  $('#contactTab').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');
+  $('#contactTab').href=$('#changeLink').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');
   $('#evMeta').textContent=e?evWhen(e):(db?t('Choisissez un événement'):'');
-  document.querySelector('.tabs').hidden=!e;
+  document.querySelector('.tabrow').hidden=!e;
   document.title=(e?e.nom+' · ':'')+t('Régie Bénévoles');
   document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.tab===S.tab)));
 }
@@ -185,9 +192,9 @@ function render(){
   if(!db){m.innerHTML=`<div class="empty">${t('Chargement des données…')}</div>`;return}
   if(!ev()){m.innerHTML=rList();return}
   const html={dash:rDash,plan:rPlan,bens:rBens,postes:rPostes}[S.tab]||rPlan;
-  const ro=S.ro&&(S.tab==='dash'||S.tab==='plan')?`<div class="panel cta"><p><b>${t('Envie de donner un coup de main ?')}</b> <span class="muted">${t('Choisissez un créneau libre, il suffit de votre prénom et de votre nom.')}</span></p><a class="btn pri" href="${esc(signupUrl())}">${t('S’inscrire comme bénévole')}</a></div>`:'';
+  const ro=S.ro&&(S.tab==='dash'||S.tab==='plan')?`<div class="panel cta"><p><b>${t('Envie de donner un coup de main ?')}</b> <span class="muted">${t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.')}</span></p><a class="btn pri" href="${esc(signupUrl())}">${t('S’inscrire comme bénévole')}</a></div>`:'';
   m.innerHTML=ro+html();
-  if(S.tab==='bens'){const q=$('#q');if(q&&render.focusQ){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
+  if(render.focusQ){const q=$('#q')||$('#pq');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
   if(DR.kind&&!DR.form)renderDrawer();
 }
 
@@ -276,7 +283,39 @@ function rPlan(){
     <div class="legend"><span><span class="pill ok">${t('complet')}</span></span><span><span class="pill warn">${t('partiel')}</span></span><span><span class="pill crit">${t('vide')}</span></span><span>${t('Un créneau qui commence avant 6h compte dans la nuit du jour affiché (ex. 00h–05h le 31/12 = nuit du 31 au 1er).')}</span></div>`;
   }
   const seg=`<div class="seg" role="group" aria-label="${t('Affichage')}">${[['grid',t('Grille')],['list',t('Liste')]].map(v=>`<button type="button" data-act="view" data-id="${v[0]}" aria-pressed="${S.view===v[0]}">${v[1]}</button>`).join('')}</div>`;
-  return `<section class="sec"><div class="sec-h"><div class="days">${chips}</div><div class="actions">${seg}<button class="btn pri adm" type="button" data-act="cren-new" data-day="${esc(S.day)}">${t('+ Créneau')}</button></div></div>${body}</section>`;
+  return `${rPlanSearch()}<section class="sec"><div class="sec-h"><div class="days">${chips}</div><div class="actions">${seg}<button class="btn pri adm" type="button" data-act="cren-new" data-day="${esc(S.day)}">${t('+ Créneau')}</button></div></div>${body}</section>`;
+}
+/* recherche d'inscription : par prénom/nom (données publiques) ou par e-mail/téléphone.
+   Hors session admin, l'e-mail et le téléphone ne sont pas dans les données : le serveur cherche la valeur exacte (action lookup). */
+const fold=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const digits=s=>String(s||'').replace(/\D/g,'');
+const isMail=q=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.trim());
+const isTel=q=>/^[+0-9 .()-]+$/.test(q.trim())&&digits(q).length>=9;
+const telKey=s=>digits(s).slice(-9); /* 06…, +33 6… et 0033 6… donnent la même clé */
+function searchBens(q){
+  if(isMail(q)||isTel(q)){
+    if(S.ro)return S.pres&&S.pres.q===q?S.pres.ids.map(ben).filter(Boolean):null; /* en attente du serveur */
+    return S.benevoles.filter(b=>isMail(q)?fold(b.email)===fold(q):telKey(b.tel)===telKey(q));
+  }
+  const words=fold(q).split(/\s+/).filter(Boolean);
+  return S.benevoles.filter(b=>{const n=fold(b.prenom+' '+b.nom);return words.every(w=>n.includes(w))||(!S.ro&&(fold(b.email).includes(fold(q))||(digits(q).length>=4&&digits(b.tel).includes(digits(q)))))});
+}
+function rPlanSearch(){
+  const q=S.pq.trim();let res='';
+  if(q.length>=2){
+    const found=searchBens(q);
+    if(found===null)res=`<div class="muted ps-msg">${t('Recherche…')}</div>`;
+    else if(!found.length)res=`<div class="muted ps-msg">${t('Aucun bénévole trouvé.')}${S.ro&&/[@0-9]/.test(q)&&!isMail(q)&&!isTel(q)?' '+t('Pour retrouver une inscription par e-mail ou téléphone, saisissez-les en entier.'):''}</div>`;
+    else res=found.sort((a,b)=>bName(a).localeCompare(bName(b),'fr')).slice(0,8).map(b=>{const sh=shiftsOf(b.id);
+      return `<div class="ps-ben"><div class="ps-h"><b>${esc(bName(b))}</b><span class="muted num">${tn(sh.filter(x=>x.a.statut!=='absent').length,'{n} créneau','{n} créneaux')}</span></div>
+        ${sh.length?`<div class="list">${sh.map(({a,c})=>{const p=poste(c.posteId);return `<div class="row click" data-act="cren" data-id="${esc(c.id)}"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(posteNom(p))}</span>${a.statut&&a.statut!=='prevu'?`<span class="pill ${a.statut==='present'?'ok':'crit'}">${esc(statutLab(a))}</span>`:'<span></span>'}</div>`}).join('')}</div>`:`<div class="muted ps-msg">${t('Aucune inscription sur cet événement.')}</div>`}</div>`}).join('')+(found.length>8?`<div class="muted ps-msg">${t('+ {n} autres',{n:found.length-8})}</div>`:'');
+  }
+  return `<section class="panel psearch"><label for="pq" class="ps-l">${t('Retrouver une inscription')}</label><input id="pq" class="search" type="search" autocomplete="off" value="${esc(S.pq)}" placeholder="${t('Prénom, nom, e-mail ou téléphone')}">${res}</section>`;
+}
+async function lookup(q){
+  try{const j=await api({action:'lookup',q});S.pres={q,ids:j.ids||[]}}
+  catch(e){S.pres={q,ids:[]};toast((e&&e.message)||t('Recherche impossible.'))}
+  if(S.pq.trim()===q){render.focusQ=document.activeElement&&document.activeElement.id==='pq';render();render.focusQ=false}
 }
 /* vue liste : comme la page d'inscription, regroupée par poste (dans l'ordre de leur premier créneau) */
 function rPlanList(cs){
@@ -465,7 +504,12 @@ document.addEventListener('change',async e=>{
   if(el.id==='evSel'){location.href=evUrl(el.value)}
   else if(el.dataset&&el.dataset.act==='statut'){if(await w(()=>update('affs',el.dataset.id,{statut:el.value}),t('Statut mis à jour')))render()}
 });
-document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;render.focusQ=true;render();render.focusQ=false}});
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'){S.q=e.target.value;render.focusQ=true;render();render.focusQ=false}
+  else if(e.target.id==='pq'){S.pq=e.target.value;render.focusQ=true;render();render.focusQ=false;
+    const q=S.pq.trim();clearTimeout(lookup._t);
+    if(S.ro&&(isMail(q)||isTel(q))&&!(S.pres&&S.pres.q===q))lookup._t=setTimeout(()=>{if(S.pq.trim()===q)lookup(q)},400)}
+});
 document.addEventListener('submit',async e=>{
   if(e.target.id==='frm'){e.preventDefault();submitForm(new FormData(e.target))}
   else if(e.target.id==='loginFrm'){e.preventDefault();
@@ -491,14 +535,14 @@ async function load(){
 }
 async function poll(){
   if(document.hidden||DR.form)return;
-  const typing=document.activeElement&&document.activeElement.id==='q';
+  const typing=document.activeElement&&['q','pq'].includes(document.activeElement.id);
   const pick=$('#addBen');const picked=pick&&pick.value;
   try{if(await load()){render.focusQ=typing;render();render.focusQ=false;const p2=$('#addBen');if(picked&&p2)p2.value=picked}}
   catch(e){if(e&&(e.code==='auth'||e.code==='csrf'))location.reload()}
 }
 async function boot(){
   S.ro=!CFG.admin;
-  $('#logout').hidden=S.ro;$('#login').hidden=!S.ro;$('#signupLink').hidden=!S.ro;
+  $('#logout').hidden=S.ro;$('#login').hidden=!S.ro;$('#signupLink').hidden=$('#changeLink').hidden=!S.ro;
   if(CFG.setupError){render();return}
   try{await load()}catch(e){render.noDb=true;toast((e&&e.message)||t('Chargement impossible.'))}
   render();

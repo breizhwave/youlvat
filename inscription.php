@@ -1,5 +1,5 @@
 <?php
-// Page publique : les bénévoles s'inscrivent eux-mêmes sur un créneau (prénom + nom, sans compte).
+// Page publique : les bénévoles s'inscrivent eux-mêmes sur un créneau (prénom, nom, téléphone et e-mail, sans compte).
 require_once __DIR__ . '/lib/auth.php';
 start_session();
 $setupError = null;
@@ -36,6 +36,7 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </div>
     <div class="evpick">
+      <a class="btn danger fill sm" id="changeLink" href="contact.php" data-i18n="Changer / me désister">Changer / me désister</a>
       <a class="btn band-btn sm" id="contactLink" href="contact.php" data-i18n="Contact">Contact</a>
       <a class="btn band-btn sm" id="planLink" href="index.php" data-i18n="Voir le planning">Voir le planning</a>
       <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
@@ -111,7 +112,7 @@ function renderHeader(){
   const img=$('#evImg');const iu=evImgUrl(e);img.hidden=!iu;if(iu&&img.getAttribute('src')!==iu)img.src=iu;
   $('#evMeta').textContent=e?evWhen(e):t('Choisissez un événement');
   $('#planLink').href='index.php'+(e?'?event='+encodeURIComponent(e.id):'');
-  $('#contactLink').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');
+  $('#contactLink').href=$('#changeLink').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');
   document.title=(e?e.nom+' · ':'')+t('Inscription bénévoles');
 }
 /* sans ?event= (ou événement inconnu) : liste des événements ouverts aux inscriptions */
@@ -142,16 +143,17 @@ function render(){
 
   const intro=`<section class="panel" style="padding:14px 16px;display:flex;flex-direction:column;gap:6px">
     <h2>${t('Devenir bénévole')}</h2>
-    <p style="margin:0">${t('Choisissez un ou plusieurs créneaux libres : il suffit de votre prénom et de votre nom.')} <span class="muted">${t('Un créneau qui commence avant 6h compte dans la nuit du jour affiché.')}</span></p>
+    <p style="margin:0">${t('Choisissez un ou plusieurs créneaux libres, en indiquant vos prénom, nom, téléphone et e-mail.')} <span class="muted">${t('Un créneau qui commence avant 6h compte dans la nuit du jour affiché.')}</span></p>
+    <p style="margin:0"><b>${t('Pour des raisons d’organisation, veuillez nous contacter si vous souhaitez changer de créneau ou êtes contraint·e de vous désister, en utilisant le bouton rouge.')}</b></p>
     <p class="muted num" style="margin:0">${tn(open.length,'{n} créneau à pourvoir','{n} créneaux à pourvoir')} · ${placesLibres(open.reduce((s,c)=>s+left(c),0))}${e.contact?` · ${t('Contact')} : <b style="user-select:all">${esc(e.contact)}</b>`:''}</p></section>`;
 
   const ident=`<section class="sec"><h2>${t('Vous êtes')}</h2><form class="panel ident" id="meFrm" autocomplete="on">
     <div class="field"><label for="prenom">${t('Prénom')} *</label><input id="prenom" name="prenom" autocomplete="given-name" maxlength="60" value="${esc(S.me.prenom)}" required></div>
     <div class="field"><label for="nom">${t('Nom')} *</label><input id="nom" name="nom" autocomplete="family-name" maxlength="60" value="${esc(S.me.nom)}" required></div>
-    <div class="field"><label for="tel">${t('Téléphone')}</label><input id="tel" name="tel" type="tel" autocomplete="tel" maxlength="25" value="${esc(S.me.tel)}" placeholder="06 12 34 56 78"></div>
-    <div class="field"><label for="email">${t('E-mail')}</label><input id="email" name="email" type="email" autocomplete="email" maxlength="120" value="${esc(S.me.email)}" placeholder="${t('prenom@exemple.bzh')}"></div>
+    <div class="field"><label for="tel">${t('Téléphone')} *</label><input id="tel" name="tel" type="tel" autocomplete="tel" maxlength="25" value="${esc(S.me.tel)}" placeholder="06 12 34 56 78" required></div>
+    <div class="field"><label for="email">${t('E-mail')} *</label><input id="email" name="email" type="email" autocomplete="email" maxlength="120" value="${esc(S.me.email)}" placeholder="${t('prenom@exemple.bzh')}" required></div>
     <input name="website" id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
-    <span class="muted" style="grid-column:1/-1;font-size:12.5px">${t('Vos prénom et nom apparaissent sur le planning public.')} ${t('Téléphone et e-mail sont facultatifs mais recommandés : c’est plus simple pour vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.')}</span>
+    <span class="muted" style="grid-column:1/-1;font-size:12.5px">${t('Vos prénom et nom apparaissent sur le planning public.')} ${t('Téléphone et e-mail sont obligatoires : ils servent à vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.')}</span>
   </form></section>`;
 
   const mineHtml=b?`<section class="sec mine"><div class="sec-h"><h2>${t('Mes créneaux')} <span class="muted num" style="font-size:16px">(${mine.length})</span></h2>${mine.length?`<button class="btn sm" type="button" data-act="copy">${t('Copier')}</button>`:''}</div>
@@ -193,12 +195,13 @@ document.addEventListener('click',async e=>{
     try{await navigator.clipboard.writeText(txt);toast(t('Planning copié.'))}catch(err){toast(t('Copie impossible sur cet appareil.'))}}
   else if(act==='signup'){
     readMe();
-    const prenom=S.me.prenom.trim(),nom=S.me.nom.trim();
-    if(!prenom||!nom){toast(t('Indiquez d’abord votre prénom et votre nom.'));const f=prenom?$('#nom'):$('#prenom');f.focus();f.scrollIntoView({block:'center'});return}
+    const prenom=S.me.prenom.trim(),nom=S.me.nom.trim(),tel=S.me.tel.trim(),email=S.me.email.trim();
+    const miss=ME_FIELDS.find(k=>!S.me[k].trim());
+    if(miss){toast(t('Indiquez d’abord vos prénom, nom, téléphone et e-mail.'));const f=$('#'+miss);f.focus();f.scrollIntoView({block:'center'});return}
     if(!el.classList.contains('armed')){el.classList.add('armed');el.textContent=t('Confirmer ?');setTimeout(()=>{if(el.isConnected){el.classList.remove('armed');el.textContent=t('Je m’inscris')}},4000);return}
     el.disabled=true;el.textContent='…';
     try{
-      await api({action:'signup',creneauId:id,prenom,nom,tel:S.me.tel.trim(),email:S.me.email.trim(),website:($('#website')||{}).value||''});
+      await api({action:'signup',creneauId:id,prenom,nom,tel,email,website:($('#website')||{}).value||''});
       const c=S.creneaux.find(x=>x.id===id);const p=c&&poste(c.posteId);
       toast(t('Merci {p} ! Inscrit·e : {poste}, {quand}.',{p:prenom,poste:p?p.nom:'',quand:c?shortDay(c.jour)+' '+hours(c):''}));
     }catch(err){toast((err&&err.message)||t('Inscription impossible. Réessayez.'))}

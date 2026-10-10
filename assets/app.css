@@ -37,8 +37,15 @@ a.mark{text-decoration:none}
 .evline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .evimg{width:48px;height:48px;object-fit:contain;flex:none}
 .evpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.evpick-col{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .band select{background:#262932;color:var(--band-ink);border:1px solid #3A3E4A;border-radius:var(--r);padding:7px 10px;max-width:320px;font-weight:600}
 .tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+/* onglets à gauche, S'inscrire / Changer à droite sur la même ligne */
+.tabrow{display:flex;align-items:center;gap:12px}
+.tabrow .tabs{flex:1;min-width:0}
+.tabacts{display:flex;gap:6px;flex:none}
+.tabacts:not(:has(.btn:not([hidden]))){display:none}
+@media (max-width:560px){.tabrow{flex-wrap:wrap;gap:0}.tabacts{order:-1;width:100%;justify-content:flex-end;padding-bottom:4px}.tabacts .btn.sm{padding:5px 8px;font-size:12.5px}}
 .tab{background:none;border:0;color:var(--band-muted);padding:10px 12px 11px;font-family:var(--f-display);font-weight:600;font-size:16px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
 .tab:hover{color:var(--band-ink)}
 .tab[aria-selected="true"]{color:var(--band-ink);border-bottom-color:var(--accent)}
@@ -56,6 +63,8 @@ h3{font-size:15px;font-weight:600;margin:0}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 .btn.pri:hover{filter:brightness(.96)}
 .btn.danger{color:var(--crit);border-color:var(--crit)}
+.btn.danger.fill{background:var(--crit);color:#fff;text-decoration:none}
+.btn.danger.fill:hover{filter:brightness(.92)}
 .btn.danger.armed{background:var(--crit);color:#fff}
 .btn.sm{padding:4px 9px;font-size:13px}
 .btn.band-btn{background:transparent;color:var(--band-ink);border-color:#3A3E4A}
@@ -232,6 +241,13 @@ body.ro .adm{display:none!important}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .day-h{padding:14px 0 6px;text-transform:capitalize}
+.psearch{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.psearch .ps-l{font-weight:600}
+.psearch .search{width:420px}
+.psearch .ps-msg{font-size:13px}
+.ps-ben{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px}
+.ps-ben .row{padding:8px 0}
+.ps-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
 .ident{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;padding:14px 16px}
 @media (max-width:420px){.ident{grid-template-columns:1fr}}
 .mine .row{grid-template-columns:auto 1fr;padding:8px 14px}

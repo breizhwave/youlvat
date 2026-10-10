@@ -3,7 +3,8 @@
 //   GET  api.php?action=all                 -> {events, postes, creneaux, benevoles, affectations}
 //        public ; sans session admin, tel/email/notes des bénévoles sont retirés.
 //   POST api.php {action: create|update|delete, table, id?, data}   admin (en-tête X-CSRF-Token)
-//   POST api.php {action: signup, creneauId, prenom, nom, tel?, email?}  public (en-tête X-CSRF-Token)
+//   POST api.php {action: signup, creneauId, prenom, nom, tel, email}  public (en-tête X-CSRF-Token)
+//   POST api.php {action: lookup, q}  public : bénévoles dont l'e-mail ou le téléphone est exactement q (ids seulement)
 //   POST api.php {action: login, password} / {action: logout}
 
 require_once __DIR__ . '/lib/auth.php';
@@ -101,11 +102,12 @@ function signup(PDO $pdo, array $b): void
 
     $prenom = clean_name($b['prenom'] ?? '');
     $nom = clean_name($b['nom'] ?? '');
-    // Contact facultatif, visible des seuls organisateurs.
+    // Contact obligatoire à l'inscription, visible des seuls organisateurs.
     $tel = trim((string)($b['tel'] ?? '')) ?: null;
     $email = trim((string)($b['email'] ?? '')) ?: null;
-    if ($tel !== null && !preg_match('/^\+?[0-9 .()-]{6,25}$/', $tel)) fail('Numéro de téléphone invalide.');
-    if ($email !== null && (mb_strlen($email) > 120 || !filter_var($email, FILTER_VALIDATE_EMAIL))) fail('Adresse e-mail invalide.');
+    if ($tel === null || $email === null) fail('Le téléphone et l’e-mail sont obligatoires.');
+    if (!preg_match('/^\+?[0-9 .()-]{6,25}$/', $tel)) fail('Numéro de téléphone invalide.');
+    if ((mb_strlen($email) > 120 || !filter_var($email, FILTER_VALIDATE_EMAIL))) fail('Adresse e-mail invalide.');
     $st = $pdo->prepare('SELECT c.*, p.nom AS poste FROM creneaux c JOIN postes p ON p.id = c.poste_id WHERE c.id = ?');
     $st->execute([(string)($b['creneauId'] ?? '')]);
     $c = $st->fetch();
@@ -160,6 +162,35 @@ function signup(PDO $pdo, array $b): void
     out(['ok' => true, 'benevoleId' => $bid, 'id' => $aid], 201);
 }
 
+// Recherche publique d'une inscription par e-mail ou téléphone : correspondance exacte seulement
+// (pas de recherche partielle qui permettrait de deviner les contacts), et seuls les ids sont renvoyés.
+function lookup(PDO $pdo, array $b): void
+{
+    $now = time();
+    $recent = array_filter($_SESSION['lookups'] ?? [], fn($t) => $t > $now - 3600);
+    if (count($recent) >= 30) fail('Trop de recherches depuis cet appareil. Réessayez plus tard.', 429, 'rate');
+    $recent[] = $now;
+    $_SESSION['lookups'] = array_values($recent);
+
+    $q = trim((string)($b['q'] ?? ''));
+    $digits = preg_replace('/\D/', '', $q);
+    if (filter_var($q, FILTER_VALIDATE_EMAIL)) {
+        $st = $pdo->prepare('SELECT id FROM benevoles WHERE LOWER(TRIM(email)) = ?');
+        $st->execute([mb_strtolower($q, 'UTF-8')]);
+        $ids = $st->fetchAll(PDO::FETCH_COLUMN);
+    } elseif (preg_match('/^\+?[0-9 .()-]+$/', $q) && strlen($digits) >= 9) {
+        // 06…, +33 6… et 0033 6… : on compare les 9 derniers chiffres
+        $key = substr($digits, -9);
+        $ids = [];
+        foreach ($pdo->query('SELECT id, tel FROM benevoles WHERE tel IS NOT NULL') as $r) {
+            if (substr(preg_replace('/\D/', '', $r['tel']), -9) === $key) $ids[] = $r['id'];
+        }
+    } else {
+        fail('Saisissez une adresse e-mail ou un numéro de téléphone complet.');
+    }
+    out(['ok' => true, 'ids' => $ids]);
+}
+
 try {
     $method = $_SERVER['REQUEST_METHOD'];
     $body = [];
@@ -187,6 +218,7 @@ try {
     }
 
     if ($method === 'POST' && $action === 'signup') signup($pdo, $body);
+    if ($method === 'POST' && $action === 'lookup') lookup($pdo, $body);
 
     if (!is_admin()) fail('Réservé aux organisateurs : connectez-vous.', 401, 'auth');
     if ($method !== 'POST') fail('Action inconnue.', 404, 'not_found');
