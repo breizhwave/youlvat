@@ -21,6 +21,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="assets/app.css?v=<?= filemtime(__DIR__ . '/assets/app.css') ?>">
 <script src="assets/i18n.js?v=<?= filemtime(__DIR__ . '/assets/i18n.js') ?>"></script>
+<script src="assets/rte.js?v=<?= filemtime(__DIR__ . '/assets/rte.js') ?>"></script>
 </head>
 <body<?= is_admin() ? '' : ' class="ro"' ?>>
 
@@ -37,12 +38,12 @@ header('Content-Type: text/html; charset=utf-8');
           <label for="evSel" class="sr" data-i18n="Événement">Événement</label>
           <select id="evSel"></select>
           <button class="btn band-btn sm adm" id="evEdit" type="button" hidden data-i18n="Modifier">Modifier</button>
+          <button class="btn band-btn sm adm quiet" id="evNew" type="button" data-i18n="+ Événement">+ Événement</button>
         </div>
         <div class="brand-s" id="evMeta" data-i18n="Chargement…">Chargement…</div>
       </div>
     </div>
     <div class="evpick">
-      <button class="btn band-btn sm adm" id="evNew" type="button" data-i18n="+ Événement">+ Événement</button>
       <div class="evpick-col">
         <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
         <button class="btn band-btn sm" id="login" type="button" hidden data-i18n="Organisateurs">Organisateurs</button>
@@ -199,21 +200,26 @@ function render(){
 }
 
 /* ---------- encadré d'appel aux bénévoles (planning et tableau de bord) ----------
-   texte modifiable par événement et par langue : 1re ligne en gras, puis le texte ; vide = version française, puis texte par défaut */
+   texte riche modifiable par événement et par langue ; vide = version française, puis texte par défaut */
 const APPEL_KEY={br:'appelBr',en:'appelEn'}[I18N.lang]||'appel';
+const appelDefault=()=>`<b>${t('Envie de donner un coup de main ?')}</b> <span class="muted">${t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.')}</span>`;
+/* texte brut (première version de l'encadré) : 1re ligne en gras, puis retours à la ligne */
+function appelHtml(v){
+  if(/<[a-z]/i.test(v))return RTE.safeHtml(v);
+  const l=v.split('\n').map(x=>x.trim()).filter(Boolean);
+  return `<b>${esc(l[0])}</b>${l.length>1?' '+l.slice(1).map(esc).join('<br>'):''}`;
+}
 function rCta(){
   const e=ev();
-  if(S.ctaEdit&&!S.ro)return `<div class="panel cta cta-edit"><div class="field" style="flex:1"><label for="ctaTxt">${t('Texte de l’encadré en {l}',{l:t({br:'breton',en:'anglais'}[I18N.lang]||'français')})}</label>
-    <textarea id="ctaTxt" rows="3" maxlength="1000" placeholder="${esc(t('Envie de donner un coup de main ?')+'\n'+t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.'))}">${esc(e[APPEL_KEY]||'')}</textarea>
-    <span class="muted" style="font-size:12.5px">${t('La première ligne est en gras. Laissez vide pour le texte par défaut.')}</span></div>
+  if(S.ctaEdit&&!S.ro)return `<div class="panel cta cta-edit"><div class="field" style="flex:1;min-width:0"><label id="ctaLab">${t('Texte de l’encadré en {l}',{l:t({br:'breton',en:'anglais'}[I18N.lang]||'français')})}</label>
+    ${RTE.editor({id:'ctaRte',label:'ctaLab',cls:'rte-sm',html:e[APPEL_KEY]||'',tools:['bold','italic','insertUnorderedList','link','unlink','removeFormat'],placeholder:t('Envie de donner un coup de main ?')+' '+t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.')})}
+    <span class="muted" style="font-size:12.5px">${t('Laissez vide pour le texte par défaut.')}</span></div>
     <div class="actions"><button class="btn pri" type="button" data-act="cta-save">${t('Enregistrer')}</button><button class="btn" type="button" data-act="cta-cancel">${t('Annuler')}</button></div></div>`;
-  const txt=String(e[APPEL_KEY]||e.appel||'').trim();
-  const lines=txt?txt.split('\n'):[t('Envie de donner un coup de main ?'),t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.')];
-  const rest=lines.slice(1).map(l=>l.trim()).filter(Boolean).map(esc).join('<br>');
-  return `<div class="panel cta"><p><b>${esc(lines[0].trim())}</b>${rest?` <span class="muted">${rest}</span>`:''}</p><div class="actions"><button class="btn sm adm" type="button" data-act="cta-edit">${t('Modifier')}</button><a class="btn pri" href="${esc(signupUrl())}">${t('S’inscrire comme bénévole')}</a></div></div>`;
+  const v=String(e[APPEL_KEY]||e.appel||'').trim();
+  return `<div class="panel cta"><div class="rich cta-txt">${v?appelHtml(v):appelDefault()}</div><div class="actions"><button class="btn sm adm" type="button" data-act="cta-edit">${t('Modifier')}</button><a class="btn pri" href="${esc(signupUrl())}">${t('S’inscrire comme bénévole')}</a></div></div>`;
 }
 async function saveCta(){
-  const v=$('#ctaTxt').value.trim();
+  const v=RTE.value($('#ctaRte'));
   if(await w(()=>update('events',S.eventId,{[APPEL_KEY]:v}),t('Modifications enregistrées'))){S.ctaEdit=false;render()}
 }
 
@@ -498,7 +504,7 @@ document.addEventListener('click',async ev0=>{
   if(el.tagName==='A')ev0.preventDefault();
   switch(act){
     case 'close':closeDr();break;
-    case 'cta-edit':S.ctaEdit=true;render();{const x=$('#ctaTxt');if(x)x.focus()}break;
+    case 'cta-edit':S.ctaEdit=true;render();{const x=$('#ctaRte');if(x)x.focus()}break;
     case 'cta-cancel':S.ctaEdit=false;render();break;
     case 'cta-save':saveCta();break;
     case 'day':S.day=id;S.dayPinned=true;go();break;
@@ -543,6 +549,7 @@ $('#logout').addEventListener('click',async()=>{try{await api({action:'logout'})
 $('#scrim').addEventListener('click',closeDr);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&DR.kind)closeDr()});
 $('#evNew').addEventListener('click',()=>openForm('event'));
+RTE.install(toast);
 $('#evEdit').addEventListener('click',()=>{if(S.eventId)openForm('event',S.eventId)});
 
 /* ---------- démarrage ---------- */

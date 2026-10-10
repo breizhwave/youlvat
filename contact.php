@@ -18,6 +18,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="assets/app.css?v=<?= filemtime(__DIR__ . '/assets/app.css') ?>">
 <script src="assets/i18n.js?v=<?= filemtime(__DIR__ . '/assets/i18n.js') ?>"></script>
+<script src="assets/rte.js?v=<?= filemtime(__DIR__ . '/assets/rte.js') ?>"></script>
 </head>
 <body<?= is_admin() ? '' : ' class="ro"' ?>>
 <header class="band">
@@ -77,21 +78,7 @@ async function api(body){
 }
 async function load(){const j=await api();S.events=j.events;S.loaded=true}
 
-/* affichage du texte riche : même liste blanche que le serveur (lib/html.php), par sécurité */
-const RICH_TAGS=['P','BR','STRONG','B','EM','I','U','A','UL','OL','LI','H3','H4','BLOCKQUOTE'];
-function safeHtml(html){
-  const doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');
-  const walk=node=>{[...node.childNodes].forEach(ch=>{
-    if(ch.nodeType===3)return;
-    if(ch.nodeType!==1){ch.remove();return}
-    if(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','TEMPLATE','FORM','SVG'].includes(ch.tagName)){ch.remove();return}
-    walk(ch);
-    if(!RICH_TAGS.includes(ch.tagName)){ch.replaceWith(...ch.childNodes);return}
-    [...ch.attributes].forEach(a=>{if(!(ch.tagName==='A'&&a.name==='href'))ch.removeAttribute(a.name)});
-    if(ch.tagName==='A'){if(/^(https?:\/\/|mailto:|tel:)/i.test(ch.getAttribute('href')||'')){ch.target='_blank';ch.rel='noopener'}else ch.removeAttribute('href')}
-  })};
-  const root=doc.body.firstChild;walk(root);return root.innerHTML;
-}
+const safeHtml=RTE.safeHtml;
 /* une ligne de texte libre : liens web et e-mails rendus cliquables, le reste échappé */
 function linkify(line){
   return esc(line)
@@ -135,14 +122,12 @@ function rView(e){
 }
 
 /* ---------- éditeur (organisateurs) ---------- */
-const TOOLS=[['bold','B',t('Gras')],['italic','I',t('Italique')],['h3','H',t('Titre')],['insertUnorderedList','•',t('Liste à puces')],['insertOrderedList','1.',t('Liste numérotée')],['link','🔗',t('Lien')],['unlink','⛓̸',t('Retirer le lien')],['removeFormat','⌫',t('Effacer la mise en forme')]];
 function rEdit(e){
   const html=e[HTML_KEY]||'';
   return `<section class="panel contact-page">
     <h2>${t('Nous contacter')}</h2>
     <div class="field"><label id="rteLab">${t('Texte de la page en {l}',{l:t({br:'breton',en:'anglais'}[I18N.lang]||'français')})}</label>
-      <div class="rte-bar" role="toolbar" aria-label="${t('Mise en forme')}">${TOOLS.map(([c,l,tt])=>`<button type="button" data-cmd="${c}" title="${esc(tt)}" aria-label="${esc(tt)}">${l}</button>`).join('')}</div>
-      <div class="rte" id="rte" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="rteLab">${html?safeHtml(html):`<p>${t('Une question sur le bénévolat ? Écrivez-nous ou appelez-nous.')}</p>`}</div>
+      ${RTE.editor({id:'rte',label:'rteLab',html:html||`<p>${t('Une question sur le bénévolat ? Écrivez-nous ou appelez-nous.')}</p>`})}
       <span class="muted" style="font-size:12.5px">${t('Pour modifier une autre version, changez de langue en haut de page (après avoir enregistré).')}</span>
     </div>
     <h3 style="margin-top:6px">${t('Coordonnées')}</h3>
@@ -153,17 +138,6 @@ function rEdit(e){
     <div class="field"><label for="cInfos">${t('Autres informations de contact (une par ligne : adresse, site web, réseaux sociaux…)')}</label><textarea id="cInfos" rows="4">${esc(e.contactInfos||'')}</textarea></div>
     <div class="actions" style="justify-content:flex-start"><button class="btn pri" type="button" data-act="save">${t('Enregistrer')}</button><button class="btn" type="button" data-act="cancel">${t('Annuler')}</button></div>
   </section>`;
-}
-function runCmd(cmd){
-  const rte=$('#rte');if(!rte)return;rte.focus();
-  if(cmd==='h3'){const cur=(document.queryCommandValue('formatBlock')||'').toLowerCase();document.execCommand('formatBlock',false,cur==='h3'?'p':'h3');return}
-  if(cmd==='link'){
-    const url=prompt(t('Adresse du lien (https://…, mailto:… ou tel:…)'),'https://');
-    if(!url)return;
-    if(!/^(https?:\/\/|mailto:|tel:)\S+$/i.test(url.trim())){toast(t('Adresse de lien invalide : utilisez https://, mailto: ou tel:'));return}
-    document.execCommand('createLink',false,url.trim());return;
-  }
-  document.execCommand(cmd,false,null);
 }
 async function save(){
   const e=ev();const rte=$('#rte');
@@ -185,20 +159,12 @@ function render(){
   m.innerHTML=S.editing&&CFG.admin?rEdit(e):rView(e);
 }
 
-document.addEventListener('mousedown',e=>{if(e.target.closest('[data-cmd]'))e.preventDefault()}); /* garde la sélection dans l'éditeur */
+RTE.install(toast);
 document.addEventListener('click',e=>{
-  const c=e.target.closest('[data-cmd]');if(c){runCmd(c.dataset.cmd);return}
   const a=e.target.closest('[data-act]');if(!a)return;
   if(a.dataset.act==='edit'){S.editing=true;render();const r=$('#rte');if(r)r.focus()}
   else if(a.dataset.act==='cancel'){S.editing=false;render()}
   else if(a.dataset.act==='save')save();
-});
-/* collage : texte brut uniquement (évite la mise en forme parasite de Word, des pages web…) */
-document.addEventListener('paste',e=>{
-  if(!e.target.closest||!e.target.closest('#rte'))return;
-  e.preventDefault();
-  const txt=(e.clipboardData||window.clipboardData).getData('text/plain');
-  document.execCommand('insertText',false,txt);
 });
 document.addEventListener('change',e=>{
   if(e.target.id==='evSel')location.href=location.pathname+q(e.target.value);

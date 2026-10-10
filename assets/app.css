@@ -69,6 +69,8 @@ h3{font-size:15px;font-weight:600;margin:0}
 .btn.sm{padding:4px 9px;font-size:13px}
 .btn.band-btn{background:transparent;color:var(--band-ink);border-color:#3A3E4A}
 .btn.band-btn:hover{background:#262932}
+.btn.band-btn.quiet{color:var(--band-muted);border-color:#2E3240;font-weight:500} /* action rare : en gris */
+.btn.band-btn.quiet:hover{color:var(--band-ink)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 
 /* KPIs */
@@ -187,8 +189,12 @@ body.ro .adm{display:none!important}
 .cta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:12px 16px;border-left:4px solid var(--accent)}
 .cta p{margin:0}
 .cta .actions{align-items:center}
+.cta-txt{flex:1;min-width:0;font-size:14.5px}
+.cta-txt p+p,.cta-txt ul,.cta-txt ol{margin-top:4px}
+.cta-txt ul,.cta-txt ol{margin-bottom:0;padding-left:20px}
 .cta-edit{align-items:flex-end}
-.cta-edit textarea{width:100%}
+.rte.rte-sm{min-height:76px}
+.rte[data-ph]:empty::before{content:attr(data-ph);color:var(--muted)}
 
 /* mobile */
 @media (max-width:560px){
