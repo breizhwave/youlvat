@@ -186,6 +186,9 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
 body.ro .adm{display:none!important}
 .cta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:12px 16px;border-left:4px solid var(--accent)}
 .cta p{margin:0}
+.cta .actions{align-items:center}
+.cta-edit{align-items:flex-end}
+.cta-edit textarea{width:100%}
 
 /* mobile */
 @media (max-width:560px){

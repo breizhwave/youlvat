@@ -2,7 +2,7 @@
 // Liste blanche des tables/colonnes exposées par l'API, et conversion camelCase <-> snake_case.
 
 const TABLES = [
-    'events'       => ['cols' => ['nom', 'lieu', 'debut', 'fin', 'sheetUrl', 'imageUrl', 'contact', 'contactTel', 'contactInfos', 'contactHtml', 'contactHtmlBr', 'contactHtmlEn', 'deroule'],
+    'events'       => ['cols' => ['nom', 'lieu', 'debut', 'fin', 'sheetUrl', 'imageUrl', 'contact', 'contactTel', 'contactInfos', 'contactHtml', 'contactHtmlBr', 'contactHtmlEn', 'appel', 'appelBr', 'appelEn', 'deroule'],
                        'req'  => ['nom', 'debut', 'fin'], 'int' => []],
     'postes'       => ['cols' => ['eventId', 'nom', 'couleur', 'responsable', 'description'],
                        'req'  => ['eventId', 'nom'], 'int' => ['couleur']],

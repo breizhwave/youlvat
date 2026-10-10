@@ -73,6 +73,9 @@ function validate(string $table, array $d, bool $isCreate): void
     if (isset($d['statut']) && !in_array($d['statut'], ['prevu', 'present', 'absent'], true)) fail('Statut invalide.');
     if (isset($d['sheetUrl']) && !preg_match('~^https://~', $d['sheetUrl'])) fail('Le lien du Google Sheet doit commencer par https://');
     if (isset($d['imageUrl']) && !preg_match('~^https://\S+$~', $d['imageUrl'])) fail("L'adresse de l'image doit commencer par https://");
+    foreach (['appel', 'appelBr', 'appelEn'] as $k) {
+        if (isset($d[$k]) && mb_strlen($d[$k]) > 1000) fail('Texte trop long (1000 caractères max).');
+    }
     if (isset($d['contactTel']) && !preg_match('/^\+?[0-9 .()-]{6,25}$/', $d['contactTel'])) fail('Numéro de téléphone invalide.');
 }
 

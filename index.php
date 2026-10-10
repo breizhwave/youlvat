@@ -192,10 +192,29 @@ function render(){
   if(!db){m.innerHTML=`<div class="empty">${t('Chargement des données…')}</div>`;return}
   if(!ev()){m.innerHTML=rList();return}
   const html={dash:rDash,plan:rPlan,bens:rBens,postes:rPostes}[S.tab]||rPlan;
-  const ro=S.ro&&(S.tab==='dash'||S.tab==='plan')?`<div class="panel cta"><p><b>${t('Envie de donner un coup de main ?')}</b> <span class="muted">${t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.')}</span></p><a class="btn pri" href="${esc(signupUrl())}">${t('S’inscrire comme bénévole')}</a></div>`:'';
-  m.innerHTML=ro+html();
+  const cta=S.tab==='dash'||S.tab==='plan'?rCta():'';
+  m.innerHTML=cta+html();
   if(render.focusQ){const q=$('#q')||$('#pq');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
   if(DR.kind&&!DR.form)renderDrawer();
+}
+
+/* ---------- encadré d'appel aux bénévoles (planning et tableau de bord) ----------
+   texte modifiable par événement et par langue : 1re ligne en gras, puis le texte ; vide = version française, puis texte par défaut */
+const APPEL_KEY={br:'appelBr',en:'appelEn'}[I18N.lang]||'appel';
+function rCta(){
+  const e=ev();
+  if(S.ctaEdit&&!S.ro)return `<div class="panel cta cta-edit"><div class="field" style="flex:1"><label for="ctaTxt">${t('Texte de l’encadré en {l}',{l:t({br:'breton',en:'anglais'}[I18N.lang]||'français')})}</label>
+    <textarea id="ctaTxt" rows="3" maxlength="1000" placeholder="${esc(t('Envie de donner un coup de main ?')+'\n'+t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.'))}">${esc(e[APPEL_KEY]||'')}</textarea>
+    <span class="muted" style="font-size:12.5px">${t('La première ligne est en gras. Laissez vide pour le texte par défaut.')}</span></div>
+    <div class="actions"><button class="btn pri" type="button" data-act="cta-save">${t('Enregistrer')}</button><button class="btn" type="button" data-act="cta-cancel">${t('Annuler')}</button></div></div>`;
+  const txt=String(e[APPEL_KEY]||e.appel||'').trim();
+  const lines=txt?txt.split('\n'):[t('Envie de donner un coup de main ?'),t('Choisissez un créneau libre et laissez-nous vos nom, téléphone et e-mail.')];
+  const rest=lines.slice(1).map(l=>l.trim()).filter(Boolean).map(esc).join('<br>');
+  return `<div class="panel cta"><p><b>${esc(lines[0].trim())}</b>${rest?` <span class="muted">${rest}</span>`:''}</p><div class="actions"><button class="btn sm adm" type="button" data-act="cta-edit">${t('Modifier')}</button><a class="btn pri" href="${esc(signupUrl())}">${t('S’inscrire comme bénévole')}</a></div></div>`;
+}
+async function saveCta(){
+  const v=$('#ctaTxt').value.trim();
+  if(await w(()=>update('events',S.eventId,{[APPEL_KEY]:v}),t('Modifications enregistrées'))){S.ctaEdit=false;render()}
 }
 
 /* ---------- liste des événements (page sans ?event=) ---------- */
@@ -479,6 +498,9 @@ document.addEventListener('click',async ev0=>{
   if(el.tagName==='A')ev0.preventDefault();
   switch(act){
     case 'close':closeDr();break;
+    case 'cta-edit':S.ctaEdit=true;render();{const x=$('#ctaTxt');if(x)x.focus()}break;
+    case 'cta-cancel':S.ctaEdit=false;render();break;
+    case 'cta-save':saveCta();break;
     case 'day':S.day=id;S.dayPinned=true;go();break;
     case 'view':S.view=id;ls.set('rb.view',id);render();break;
     case 'cren':openDr('cren',id);break;
@@ -534,7 +556,7 @@ async function load(){
   db=true;return changed;
 }
 async function poll(){
-  if(document.hidden||DR.form)return;
+  if(document.hidden||DR.form||S.ctaEdit)return;
   const typing=document.activeElement&&['q','pq'].includes(document.activeElement.id);
   const pick=$('#addBen');const picked=pick&&pick.value;
   try{if(await load()){render.focusQ=typing;render();render.focusQ=false;const p2=$('#addBen');if(picked&&p2)p2.value=picked}}

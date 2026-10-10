@@ -76,7 +76,8 @@ Les tables sont `events` → `postes` → `creneaux` → `affectations` ← `ben
 4. **Candidats** : ils sont triés par nombre d'heures déjà planifiées, du plus petit au plus grand, pour équilibrer la charge.
 5. **Pointage le jour J** : chaque affectation a un statut `prevu` / `present` / `absent`.
 6. **Planning** : c'est l'onglet affiché à l'ouverture. En haut, « Retrouver une inscription » cherche un bénévole et affiche ses créneaux de l'événement : par prénom/nom (partiel, sans accents) côté navigateur, ou par e-mail/téléphone. Hors admin, l'e-mail et le téléphone ne sont pas dans les données : `POST {action: lookup, q}` cherche la **valeur exacte** (téléphone comparé sur les 9 derniers chiffres) et ne renvoie que des ids, avec une limite de 30 recherches par heure et par session. Sans `?day=`, il s'ouvre sur le jour qui compte le plus de créneaux. Deux vues au choix, mémorisées (`rb.view`) : **Grille** (frise horaire, seulement les postes qui ont des créneaux ce jour-là) et **Liste** (créneaux regroupés par poste, comme sur `inscription.php`), qui est la vue par défaut sur téléphone.
-7. **Déroulé de la soirée** : c'est le champ texte `events.deroule`, avec une ligne par étape au format `HH:MM Libellé`.
+7. **Encadré « Envie de donner un coup de main ? »** (onglets Planning et Tableau de bord, visible par tous, organisateurs compris, avec le bouton « S'inscrire comme bénévole ») : texte modifiable sur place par les organisateurs (bouton « Modifier »), stocké par événement et par langue dans `events.appel`, `appel_br`, `appel_en` (texte brut, 1000 caractères max). La 1re ligne est en gras, la suite en texte normal. Si la version de la langue est vide, on prend la version française, puis le texte par défaut traduit.
+8. **Déroulé de la soirée** : c'est le champ texte `events.deroule`, avec une ligne par étape au format `HH:MM Libellé`.
 
 ## Données à importer
 
