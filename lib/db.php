@@ -49,17 +49,63 @@ function db(): PDO
     ]);
 
     if ($isSqlite) {
-        $pdo->exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
+        $pdo->exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
+        // WAL : les lectures ne bloquent pas les écritures. Sur un disque réseau, SQLite peut le refuser
+        // sans erreur et garder son ancien mode : on le signale une fois dans le journal PHP.
+        $mode = strtolower((string)$pdo->query('PRAGMA journal_mode = WAL')->fetchColumn());
+        db_journal_mode($mode);
+        if ($mode !== 'wal' && !is_file("$dir/.journal_warned")) {
+            error_log("[regie] SQLite n'a pas pu passer en mode WAL (mode : $mode) : les lectures bloqueront les écritures.");
+            @touch("$dir/.journal_warned");
+        }
         if ($fresh) {
             $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
             if (!empty($cfg['seed_on_create'])) {
-                $pdo->exec(file_get_contents(__DIR__ . '/../database/seed_kalanna2026.sql'));
+                // Événement de démonstration par défaut ; 'seed_kalanna2026.sql' pour le Fest-noz.
+                $seed = basename($cfg['seed_file'] ?? 'seed_demo.sql');
+                $pdo->exec(file_get_contents(__DIR__ . '/../database/' . $seed));
             }
         } else {
             migrate($pdo);
         }
     }
     return $pdo;
+}
+
+// Mode de journal réellement obtenu ('wal' attendu), visible des organisateurs dans api.php?action=all.
+function db_journal_mode(?string $set = null): ?string
+{
+    static $mode = null;
+    if ($set !== null) $mode = $set;
+    return $mode;
+}
+
+// Transaction qui prend le verrou d'écriture dès le début (BEGIN IMMEDIATE) : une transaction « différée »
+// qui lit avant d'écrire échoue aussitôt en SQLITE_BUSY si une autre écriture passe entre-temps,
+// sans attendre busy_timeout. Même chose si une requête de lecture a encore un curseur ouvert sur la connexion
+// (fetch() d'une seule ligne) : appeler closeCursor() avant tx(). tx() annule tout si $fn lève une exception (ou sort via fail()).
+function tx(PDO $pdo, callable $fn)
+{
+    $sqlite = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
+    $sqlite ? $pdo->exec('BEGIN IMMEDIATE') : $pdo->beginTransaction();
+    $done = false;
+    try {
+        $r = $fn();
+        $sqlite ? $pdo->exec('COMMIT') : $pdo->commit();
+        $done = true;
+        return $r;
+    } finally {
+        if (!$done) {
+            try { $sqlite ? $pdo->exec('ROLLBACK') : $pdo->rollBack(); } catch (PDOException $e) {}
+        }
+    }
+}
+
+// « database is locked » : SQLITE_BUSY (5) ou SQLITE_LOCKED (6), après expiration de busy_timeout.
+function is_busy(PDOException $e): bool
+{
+    $code = $e->errorInfo[1] ?? null;
+    return $code === 5 || $code === 6 || stripos($e->getMessage(), 'database is locked') !== false;
 }
 
 // Colonnes ajoutées après la première version : on les crée sur les bases existantes.

@@ -29,6 +29,7 @@ Il est d'abord né sous forme de prototype claude.ai (voir `reference/ui-prototy
 - La base est créée automatiquement au premier lancement à partir de `database/schema.sql`.
 - Pour chaque connexion PDO : `PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;`
 - Les dossiers `data/` (qui contient `regie.sqlite`) et `database/` (schéma et seed) sont protégés par un `.htaccess` (`Require all denied` + fallback `Deny from all`) et un `index.php` vide. `protect_dir()` (`lib/db.php`) recrée ceux de `data/` s'ils manquent sur le serveur. Si `data/` n'est pas inscriptible, l'app doit l'expliquer clairement.
+- **Écritures simultanées (SQLITE_BUSY)** : WAL (les lectures ne bloquent pas les écritures) + `busy_timeout` de 5 s. Une transaction s'ouvre avec `tx()` (`lib/db.php`, `BEGIN IMMEDIATE`), jamais avec `beginTransaction()`. Fermer les curseurs (`closeCursor()` après un `fetch()` d'une seule ligne) avant `tx()` : avec une lecture encore ouverte, SQLite renvoie BUSY tout de suite au lieu d'attendre. Si l'attente dépasse 5 s, l'API répond 503 `busy` (rien n'est écrit) et `api()` réessaie une fois côté navigateur. Le mode réellement obtenu est renvoyé aux organisateurs dans `action=all` (`dbMode`, `wal` attendu) ; sinon un avertissement est écrit une fois dans le journal PHP. Sauvegarde : passer par `export.php`, pas par une copie FTP de `regie.sqlite` pendant l'utilisation.
 - Requêtes préparées uniquement. Réponses JSON en UTF-8 (`JSON_UNESCAPED_UNICODE`).
 
 ## Arborescence visée
@@ -50,7 +51,7 @@ regie/
   data/              regie.sqlite (+ .htaccess, index.php)
   export.php         export CSV (bénévoles × créneaux) et sauvegarde JSON complète
   import.php         import d'une sauvegarde JSON (sert aussi à changer d'hébergeur ou de SGBD)
-  database/schema.sql, seed_kalanna2026.sql, seed_kalanna2026.json
+  database/schema.sql, seed_demo.sql, seed_kalanna2026.sql, seed_kalanna2026.json
 ```
 
 ## API (proposition)
@@ -82,7 +83,9 @@ Les tables sont `events` → `postes` → `creneaux` → `affectations` ← `ben
 
 ## Données à importer
 
-`database/seed_kalanna2026.sql` contient 1 événement, 24 postes (noms bretons et français) et 56 créneaux. Aucun bénévole n'y figure encore.
+Au premier lancement, la base est remplie avec `database/seed_demo.sql` (option `seed_file` de `config.php`) : un petit événement de démonstration en anglais (6 postes, 13 créneaux, dont un de nuit et un qui passe minuit, sans bénévoles).
+
+`database/seed_kalanna2026.sql` (à choisir dans `seed_file`) contient 1 événement, 24 postes (noms bretons et français) et 56 créneaux. Aucun bénévole n'y figure encore.
 Ce jeu de données a été vérifié : le schéma et le seed se chargent sans erreur, et les cascades fonctionnent.
 Points signalés comme **à vérifier avec l'organisation** (voir les notes « à préciser » dans les créneaux) : les horaires de l'installation du 29/12, de la préparation des crêpes à Quimperlé et de l'hébergement, l'effectif de la laverie, et les effectifs de la régie de 20h à 0h (2 ou 3 ?). Les créneaux qui finissent à « Fin » ont été fixés à 05:00, et ceux du bar à 04:45.
 

@@ -12,6 +12,8 @@ return [
     'db_user' => null,
     'db_pass' => null,
 
-    // Importe database/seed_kalanna2026.sql lors de la création de la base.
+    // Lors de la création de la base, importe un jeu de données de database/ :
+    // seed_demo.sql (petit événement de démonstration en anglais) ou seed_kalanna2026.sql.
     'seed_on_create' => true,
+    'seed_file'      => 'seed_demo.sql',
 ];

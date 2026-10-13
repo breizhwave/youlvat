@@ -21,6 +21,8 @@ function out($data, int $code = 200): void
     exit;
 }
 
+class FullException extends RuntimeException {}
+
 function fail(string $msg, int $code = 400, string $err = 'bad_request'): void
 {
     out(['ok' => false, 'error' => $err, 'message' => $msg], $code);
@@ -81,6 +83,7 @@ function get_row(PDO $pdo, string $table, string $id): ?array
     $st = $pdo->prepare("SELECT * FROM $table WHERE id = ?");
     $st->execute([$id]);
     $r = $st->fetch();
+    $st->closeCursor();
     return $r ? row_to_api($r) : null;
 }
 
@@ -111,6 +114,7 @@ function signup(PDO $pdo, array $b): void
     $st = $pdo->prepare('SELECT c.*, p.nom AS poste FROM creneaux c JOIN postes p ON p.id = c.poste_id WHERE c.id = ?');
     $st->execute([(string)($b['creneauId'] ?? '')]);
     $c = $st->fetch();
+    $st->closeCursor(); // un curseur resté ouvert empêcherait tx() d'attendre le verrou (voir lib/db.php)
     if (!$c) fail('Ce créneau n’existe plus.', 404, 'not_found');
 
     $key = fn($s) => mb_strtolower($s, 'UTF-8');
@@ -135,27 +139,26 @@ function signup(PDO $pdo, array $b): void
         }
     }
 
-    $pdo->beginTransaction();
-    if (!$bid) {
-        $bid = new_id();
-        $pdo->prepare('INSERT INTO benevoles (id, prenom, nom, tel, email) VALUES (?, ?, ?, ?, ?)')->execute([$bid, $prenom, $nom, $tel, $email]);
-    } elseif ($tel !== null || $email !== null) {
-        // Fiche existante : on complète seulement les champs vides, sans jamais écraser un contact déjà saisi.
-        $pdo->prepare('UPDATE benevoles SET tel = COALESCE(tel, ?), email = COALESCE(email, ?), updated_at = ? WHERE id = ?')
-            ->execute([$tel, $email, now_iso(), $bid]);
-    }
-    // Insertion conditionnelle en une seule requête : impossible de dépasser le besoin, même à plusieurs en même temps.
-    $aid = new_id();
-    $st = $pdo->prepare("INSERT INTO affectations (id, event_id, creneau_id, benevole_id, statut)
-        SELECT ?, ?, ?, ?, 'prevu'
-         WHERE (SELECT COUNT(*) FROM affectations WHERE creneau_id = ? AND statut <> 'absent')
-             < (SELECT besoin FROM creneaux WHERE id = ?)");
-    $st->execute([$aid, $c['event_id'], $c['id'], $bid, $c['id'], $c['id']]);
-    if (!$st->rowCount()) {
-        $pdo->rollBack();
-        fail('Ce créneau est complet. Choisissez-en un autre.', 409, 'full');
-    }
-    $pdo->commit();
+    // Fiche + affectation dans une seule transaction (verrou d'écriture pris dès le début, voir tx()).
+    $aid = tx($pdo, function () use ($pdo, &$bid, $prenom, $nom, $tel, $email, $c) {
+        if (!$bid) {
+            $bid = new_id();
+            $pdo->prepare('INSERT INTO benevoles (id, prenom, nom, tel, email) VALUES (?, ?, ?, ?, ?)')->execute([$bid, $prenom, $nom, $tel, $email]);
+        } elseif ($tel !== null || $email !== null) {
+            // Fiche existante : on complète seulement les champs vides, sans jamais écraser un contact déjà saisi.
+            $pdo->prepare('UPDATE benevoles SET tel = COALESCE(tel, ?), email = COALESCE(email, ?), updated_at = ? WHERE id = ?')
+                ->execute([$tel, $email, now_iso(), $bid]);
+        }
+        // Insertion conditionnelle en une seule requête : impossible de dépasser le besoin, même à plusieurs en même temps.
+        $st = $pdo->prepare("INSERT INTO affectations (id, event_id, creneau_id, benevole_id, statut)
+            SELECT ?, ?, ?, ?, 'prevu'
+             WHERE (SELECT COUNT(*) FROM affectations WHERE creneau_id = ? AND statut <> 'absent')
+                 < (SELECT besoin FROM creneaux WHERE id = ?)");
+        $aid = new_id();
+        $st->execute([$aid, $c['event_id'], $c['id'], $bid, $c['id'], $c['id']]);
+        if (!$st->rowCount()) throw new FullException();
+        return $aid;
+    });
 
     $recent[] = $now;
     $_SESSION['signups'] = array_values($recent);
@@ -214,7 +217,8 @@ try {
     $pdo = db();
 
     if ($method === 'GET' && $action === 'all') {
-        out(['ok' => true, 'admin' => is_admin()] + fetch_all($pdo, is_admin()));
+        $extra = is_admin() && db_journal_mode() !== null ? ['dbMode' => db_journal_mode()] : [];
+        out(['ok' => true, 'admin' => is_admin()] + $extra + fetch_all($pdo, is_admin()));
     }
 
     if ($method === 'POST' && $action === 'signup') signup($pdo, $body);
@@ -260,9 +264,12 @@ try {
     }
 } catch (DbSetupError $e) {
     fail($e->getMessage(), 500, 'setup');
+} catch (FullException $e) {
+    fail('Ce créneau est complet. Choisissez-en un autre.', 409, 'full');
 } catch (PDOException $e) {
-    if (db()->inTransaction()) db()->rollBack();
     $m = $e->getMessage();
+    // Base occupée plus de busy_timeout (5 s) : rien n'a été écrit, l'interface réessaie une fois d'elle-même.
+    if (is_busy($e)) { error_log('[regie] ' . $m); fail('Serveur occupé, réessayez dans un instant.', 503, 'busy'); }
     if (stripos($m, 'UNIQUE') !== false) fail('Ce bénévole est déjà sur ce créneau.', 409, 'conflict');
     if (stripos($m, 'FOREIGN KEY') !== false) fail('Élément lié introuvable (supprimé entre-temps ?).', 409, 'conflict');
     if (stripos($m, 'CHECK') !== false || stripos($m, 'NOT NULL') !== false) fail('Valeur refusée par la base.', 400);

@@ -148,11 +148,13 @@ function eventDays(){const e=ev();const set=new Set();if(e&&e.debut){const a=day
 
 /* ---------- écriture ---------- */
 function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>{el.hidden=true},2800)}
-async function api(body){
+async function api(body,retry=1){
   const opt=body?{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CFG.csrf},body:JSON.stringify(body)}:{};
   let r,j;
   try{r=await fetch(body?'api.php':'api.php?action=all',Object.assign({credentials:'same-origin',cache:'no-store'},opt));j=await r.json()}
   catch(e){throw {code:'network',message:t('Serveur injoignable. Vérifiez la connexion.')}}
+  /* base momentanément occupée : rien n'a été écrit, on réessaie une fois */
+  if(j&&j.error==='busy'&&retry){await new Promise(f=>setTimeout(f,700));return api(body,0)}
   if(!r.ok||!j.ok)throw {code:j&&j.error,message:j&&j.message&&t(j.message)};
   return j;
 }

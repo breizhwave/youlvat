@@ -84,11 +84,13 @@ const creneaux=()=>S.creneaux.filter(c=>c.eventId===S.eventId).sort((a,b)=>span(
 const placesLibres=l=>tn(l,'{n} place libre','{n} places libres');
 
 function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>{el.hidden=true},3500)}
-async function api(body){
+async function api(body,retry=1){
   const opt=body?{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CFG.csrf},body:JSON.stringify(body)}:{};
   let r,j;
   try{r=await fetch(body?'api.php':'api.php?action=all',Object.assign({credentials:'same-origin',cache:'no-store'},opt));j=await r.json()}
   catch(e){throw {message:t('Serveur injoignable. Vérifiez votre connexion.')}}
+  /* base momentanément occupée : rien n'a été écrit, on réessaie une fois */
+  if(j&&j.error==='busy'&&retry){await new Promise(f=>setTimeout(f,700));return api(body,0)}
   if(!r.ok||!j.ok){
     /* le chevauchement renvoie ses éléments séparément pour pouvoir être traduit */
     const msg=j&&j.error==='overlap'?t('Vous êtes déjà inscrit·e à la même heure : {poste} ({debut}–{fin}).',j):(j&&j.message&&t(j.message));
