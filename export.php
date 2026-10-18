@@ -52,7 +52,7 @@ if (!$event) {
 }
 
 $st = $pdo->prepare(
-    "SELECT b.id AS bid, b.prenom, b.nom, b.tel, b.email, b.taille,
+    "SELECT b.id AS bid, b.prenom, b.nom, b.tel, b.email, b.created_at,
             c.jour, c.debut, c.fin, p.nom AS poste, a.statut
        FROM benevoles b
        LEFT JOIN affectations a ON a.benevole_id = b.id AND a.event_id = :ev
@@ -68,10 +68,10 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="benevoles-' . slug($event['nom']) . '.csv"');
 $f = fopen('php://output', 'w');
 fwrite($f, "\xEF\xBB\xBF");
-fputcsv($f, ['Prénom', 'Nom', 'Téléphone', 'E-mail', 'T-shirt', 'Jour', 'Poste', 'Début', 'Fin', 'Heures', 'Statut'], ';', '"', '');
+fputcsv($f, ['Prénom', 'Nom', 'Téléphone', 'E-mail', 'Inscription', 'Jour', 'Poste', 'Début', 'Fin', 'Heures', 'Statut'], ';', '"', '');
 foreach ($st as $r) {
     fputcsv($f, [
-        $r['prenom'], $r['nom'], $r['tel'], $r['email'], $r['taille'],
+        $r['prenom'], $r['nom'], $r['tel'], $r['email'], $r['created_at'],
         $r['jour'], $r['poste'], $r['debut'], $r['fin'],
         $r['jour'] ? heures($r['debut'], $r['fin']) : '',
         $r['statut'] ? $statuts[$r['statut']] : '',

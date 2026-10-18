@@ -1,9 +1,10 @@
 <?php
 // API JSON de la régie.
 //   GET  api.php?action=all                 -> {events, postes, creneaux, benevoles, affectations}
-//        public ; sans session admin, tel/email/notes des bénévoles sont retirés.
+//        public ; sans session admin, les notes des bénévoles sont retirées, le nom est réduit
+//        à son initiale (« D. ******* »), l'e-mail à ses 2 premiers caractères, le tél à ses 2 premiers et 2 derniers chiffres.
 //   POST api.php {action: create|update|delete, table, id?, data}   admin (en-tête X-CSRF-Token)
-//   POST api.php {action: signup, creneauId, prenom, nom, tel, email}  public (en-tête X-CSRF-Token)
+//   POST api.php {action: signup, creneauId, prenom, nom, tel, email, remarques?}  public (en-tête X-CSRF-Token)
 //   POST api.php {action: lookup, q}  public : bénévoles dont l'e-mail ou le téléphone est exactement q (ids seulement)
 //   POST api.php {action: login, password} / {action: logout}
 
@@ -94,6 +95,17 @@ function clean_name($v): string
     return $v;
 }
 
+// Remarques libres de l'inscription : on retire les balises HTML puis tout caractère hors liste blanche
+// (lettres, chiffres, espaces, retours à la ligne, ponctuation courante, &). Plus de < > " ` { } $ \ etc.
+// Le & est sans risque : les notes sont toujours échappées (esc()) à l'affichage.
+function clean_remarques(string $s): string
+{
+    $s = strip_tags(str_replace(["\r\n", "\r", "\t"], ["\n", "\n", ' '], $s));
+    $s = preg_replace('/[^\p{L}\p{M}\p{N} \n.,;:!?\'’()\-\/%€+@«»…&]/u', '', $s) ?? '';
+    $s = preg_replace(['/ {2,}/', '/\n{3,}/'], [' ', "\n\n"], $s);
+    return trim($s);
+}
+
 // Inscription publique : prénom + nom, sans compte. Réutilise la fiche si le nom existe déjà.
 function signup(PDO $pdo, array $b): void
 {
@@ -111,6 +123,9 @@ function signup(PDO $pdo, array $b): void
     if ($tel === null || $email === null) fail('Le téléphone et l’e-mail sont obligatoires.');
     if (!preg_match('/^\+?[0-9 .()-]{6,25}$/', $tel)) fail('Numéro de téléphone invalide.');
     if ((mb_strlen($email) > 120 || !filter_var($email, FILTER_VALIDATE_EMAIL))) fail('Adresse e-mail invalide.');
+    // Remarques ou suggestions (facultatif) : ajoutées aux notes de la fiche, visibles des seuls organisateurs.
+    $rem = clean_remarques((string)($b['remarques'] ?? ''));
+    if (mb_strlen($rem) > 1000) fail('Remarques trop longues (1000 caractères max).');
     $st = $pdo->prepare('SELECT c.*, p.nom AS poste FROM creneaux c JOIN postes p ON p.id = c.poste_id WHERE c.id = ?');
     $st->execute([(string)($b['creneauId'] ?? '')]);
     $c = $st->fetch();
@@ -140,7 +155,7 @@ function signup(PDO $pdo, array $b): void
     }
 
     // Fiche + affectation dans une seule transaction (verrou d'écriture pris dès le début, voir tx()).
-    $aid = tx($pdo, function () use ($pdo, &$bid, $prenom, $nom, $tel, $email, $c) {
+    $aid = tx($pdo, function () use ($pdo, &$bid, $prenom, $nom, $tel, $email, $c, $rem) {
         if (!$bid) {
             $bid = new_id();
             $pdo->prepare('INSERT INTO benevoles (id, prenom, nom, tel, email) VALUES (?, ?, ?, ?, ?)')->execute([$bid, $prenom, $nom, $tel, $email]);
@@ -157,6 +172,12 @@ function signup(PDO $pdo, array $b): void
         $aid = new_id();
         $st->execute([$aid, $c['event_id'], $c['id'], $bid, $c['id'], $c['id']]);
         if (!$st->rowCount()) throw new FullException();
+        if ($rem !== '') {
+            // Sans doublon : la même remarque renvoyée avec un 2e créneau n'est ajoutée qu'une fois.
+            $pdo->prepare("UPDATE benevoles SET notes = CASE WHEN notes IS NULL OR notes = '' THEN ? ELSE notes || ? || ? END, updated_at = ?
+                            WHERE id = ? AND INSTR(COALESCE(notes, ''), ?) = 0")
+                ->execute([$rem, "\n", $rem, now_iso(), $bid, $rem]);
+        }
         return $aid;
     });
 

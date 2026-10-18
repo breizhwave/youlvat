@@ -40,7 +40,30 @@ function fetch_table(PDO $pdo, string $table): array
 }
 
 // Champs jamais montrés au public.
-const PRIVATE_COLS = ['benevoles' => ['tel', 'email', 'notes']];
+const PRIVATE_COLS = ['benevoles' => ['notes']];
+
+// Nom de famille masqué pour le public : initiale + astérisques (« Dupont » → « D. ******* »).
+// Même format que maskNom() dans inscription.php.
+function mask_nom(?string $nom): string
+{
+    $nom = trim((string)$nom);
+    return $nom === '' ? '' : mb_strtoupper(mb_substr($nom, 0, 1, 'UTF-8'), 'UTF-8') . '. *******';
+}
+
+// E-mail et téléphone masqués pour le public, juste de quoi distinguer deux homonymes :
+// 2 premiers caractères de l'e-mail (« marie@x.fr » → « ma****@**** »), 2 premiers et 2 derniers chiffres du tél (« 06******78 », +33 6… compris).
+function mask_email(?string $email): ?string
+{
+    $email = trim((string)$email);
+    return $email === '' ? null : mb_substr($email, 0, 2, 'UTF-8') . '****@****';
+}
+
+function mask_tel(?string $tel): ?string
+{
+    $d = preg_replace('/\D/', '', (string)$tel);
+    if (preg_match('/^(?:00)?33(\d{9})$/', $d, $m)) $d = '0' . $m[1]; // +33 6… / 0033 6… → 06…
+    return strlen($d) < 4 ? null : substr($d, 0, 2) . '******' . substr($d, -2);
+}
 
 function fetch_all(PDO $pdo, bool $admin = true): array
 {
@@ -50,6 +73,11 @@ function fetch_all(PDO $pdo, bool $admin = true): array
         if (!$admin && isset(PRIVATE_COLS[$t])) {
             $hide = array_flip(PRIVATE_COLS[$t]);
             $rows = array_map(fn($r) => array_diff_key($r, $hide), $rows);
+            if ($t === 'benevoles') $rows = array_map(fn($r) => [
+                'nom' => mask_nom($r['nom'] ?? ''),
+                'tel' => mask_tel($r['tel'] ?? null),
+                'email' => mask_email($r['email'] ?? null),
+            ] + $r, $rows);
         }
         $out[$t] = $rows;
     }

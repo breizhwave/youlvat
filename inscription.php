@@ -36,11 +36,21 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </div>
     <div class="evpick">
-      <a class="btn danger fill sm" id="changeLink" href="contact.php" data-i18n="Changer / me désister">Changer / me désister</a>
-      <a class="btn band-btn sm" id="contactLink" href="contact.php" data-i18n="Contact">Contact</a>
-      <a class="btn band-btn sm" id="planLink" href="index.php" data-i18n="Voir le planning">Voir le planning</a>
       <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
     </div>
+  </div>
+  <div class="wrap tabrow">
+  <nav class="tabs" aria-label="Sections">
+    <a class="tab" data-nav="plan" href="index.php" data-i18n="Planning">Planning</a>
+    <a class="tab" data-nav="dash" href="index.php" data-i18n="Tableau de bord">Tableau de bord</a>
+    <a class="tab" data-nav="bens" href="index.php" data-i18n="Bénévoles">Bénévoles</a>
+    <a class="tab" data-nav="postes" href="index.php" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</a>
+    <a class="tab" data-nav="contact" href="index.php" data-i18n="Contact">Contact</a>
+  </nav>
+  <div class="tabacts">
+    <a class="btn pri sm" data-nav="signup" href="inscription.php" aria-current="page" data-i18n="S’inscrire">S’inscrire</a>
+    <a class="btn danger fill sm" data-nav="change" href="contact.php" data-i18n="Changer / me désister">Changer / me désister</a>
+  </div>
   </div>
 </header>
 <main class="wrap" id="main"><div class="empty" data-i18n="Chargement des créneaux…">Chargement des créneaux…</div></main>
@@ -62,6 +72,16 @@ try{Object.assign(S.me,JSON.parse(ls.get('rb.me')||'{}'))}catch(e){}
 /* temps : mêmes règles que l'interface principale (avant 6h = nuit du jour indiqué) */
 const tm=x=>{const p=String(x||'0:0').split(':').map(Number);return p[0]*60+(p[1]||0)};
 const dayN=j=>Math.round(Date.parse(j+'T00:00:00Z')/864e5);
+/* lien permanent vers le planning (voir permalink.md) : nom cliquable + petit symbole de lien */
+function permaUrl(k,id){const q=new URLSearchParams();if(S.eventId)q.set('event',S.eventId);if(k==='poste')q.set('tab','postes');q.set(k,id);return 'index.php?'+q}
+const LINK_SVG='<svg class="plink-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>';
+const plink=(k,id,html)=>id?`<a class="plink" href="${esc(permaUrl(k,id))}" title="${t('Lien direct')}">${html}${LINK_SVG}</a>`:html;
+/* menu commun aux pages (mêmes onglets que index.php) : liens vers l'événement choisi */
+function navLinks(e){const id=e?encodeURIComponent(e.id):'';
+  const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',postes:'&tab=postes'};
+  document.querySelectorAll('[data-nav]').forEach(a=>{const k=a.dataset.nav;
+    a.href=k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
+  const s=document.querySelector('[data-nav="signup"]');if(s)s.hidden=!!(e&&isPast(e));}
 function span(c){const s=dayN(c.jour)*1440+tm(c.debut)+(tm(c.debut)<360?1440:0);let d=(tm(c.fin)-tm(c.debut)+1440)%1440;if(!d)d=1440;return [s,s+d]}
 const overlaps=(a,b)=>{const x=span(a),y=span(b);return x[0]<y[1]&&y[0]<x[1]};
 const dur=c=>{const x=span(c);return (x[1]-x[0])/60};
@@ -77,7 +97,9 @@ const pColor=p=>COLORS[((p&&p.couleur)||0)%COLORS.length];
 const actifs=cid=>S.affs.filter(a=>a.creneauId===cid&&a.statut!=='absent');
 const left=c=>Math.max(0,(+c.besoin||0)-actifs(c.id).length);
 const norm=s=>String(s||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('fr');
-function meBen(){const p=norm(S.me.prenom),n=norm(S.me.nom);if(!p||!n)return null;return S.benevoles.find(b=>norm(b.prenom)===p&&norm(b.nom)===n)||null}
+/* hors session admin, l'API ne donne que l'initiale du nom : même format que mask_nom() (lib/tables.php) */
+const maskNom=s=>{s=String(s||'').trim();return s?s.charAt(0).toLocaleUpperCase('fr')+'. *******':''};
+function meBen(){const p=norm(S.me.prenom),n=norm(S.me.nom),m=norm(maskNom(S.me.nom));if(!p||!n)return null;return S.benevoles.find(b=>norm(b.prenom)===p&&norm(b.nom)===n)||S.benevoles.find(b=>norm(b.prenom)===p&&norm(b.nom)===m)||null}
 function myShifts(){const b=meBen();if(!b)return [];return S.affs.filter(a=>a.benevoleId===b.id&&a.statut!=='absent').map(a=>S.creneaux.find(c=>c.id===a.creneauId)).filter(c=>c&&c.eventId===S.eventId).sort((x,y)=>span(x)[0]-span(y)[0])}
 const groupBy=(arr,key)=>arr.reduce((m,x)=>{const k=key(x);if(!m.has(k))m.set(k,[]);m.get(k).push(x);return m},new Map());
 const creneaux=()=>S.creneaux.filter(c=>c.eventId===S.eventId).sort((a,b)=>span(a)[0]-span(b)[0]);
@@ -113,8 +135,7 @@ function renderHeader(){
   sel.disabled=!open.length;
   const img=$('#evImg');const iu=evImgUrl(e);img.hidden=!iu;if(iu&&img.getAttribute('src')!==iu)img.src=iu;
   $('#evMeta').textContent=e?evWhen(e):t('Choisissez un événement');
-  $('#planLink').href='index.php'+(e?'?event='+encodeURIComponent(e.id):'');
-  $('#contactLink').href=$('#changeLink').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');
+  navLinks(e);
   document.title=(e?e.nom+' · ':'')+t('Inscription bénévoles');
 }
 /* sans ?event= (ou événement inconnu) : liste des événements ouverts aux inscriptions */
@@ -154,12 +175,13 @@ function render(){
     <div class="field"><label for="nom">${t('Nom')} *</label><input id="nom" name="nom" autocomplete="family-name" maxlength="60" value="${esc(S.me.nom)}" required></div>
     <div class="field"><label for="tel">${t('Téléphone')} *</label><input id="tel" name="tel" type="tel" autocomplete="tel" maxlength="25" value="${esc(S.me.tel)}" placeholder="06 12 34 56 78" required></div>
     <div class="field"><label for="email">${t('E-mail')} *</label><input id="email" name="email" type="email" autocomplete="email" maxlength="120" value="${esc(S.me.email)}" placeholder="${t('prenom@exemple.bzh')}" required></div>
+    <div class="field" style="grid-column:1/-1"><label for="remarques" class="ident-q">${t('Avez-vous des remarques ou suggestions à nous transmettre ?')}</label><textarea id="remarques" name="remarques" maxlength="1000" rows="3">${esc(S.me.remarques||'')}</textarea></div>
     <input name="website" id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
-    <span class="muted" style="grid-column:1/-1;font-size:12.5px">${t('Vos prénom et nom apparaissent sur le planning public.')} ${t('Téléphone et e-mail sont obligatoires : ils servent à vous prévenir d’un changement. Ils ne sont visibles que par les organisateurs.')}</span>
+    <span class="muted" style="grid-column:1/-1;font-size:12.5px">${t('Sur le planning public, seuls votre prénom, l’initiale de votre nom, les 2 premiers caractères de votre e-mail et les 2 premiers et les 2 derniers chiffres de votre téléphone apparaissent (ex. « Marie D. ******* · ✉ ma****@**** · ☎ 06******78 »). Le reste n’est visible que par les organisateurs.')} ${t('Téléphone et e-mail sont obligatoires : ils servent à vous prévenir d’un changement.')}</span>
   </form></section>`;
 
   const mineHtml=b?`<section class="sec mine"><div class="sec-h"><h2>${t('Mes créneaux')} <span class="muted num" style="font-size:16px">(${mine.length})</span></h2>${mine.length?`<button class="btn sm" type="button" data-act="copy">${t('Copier')}</button>`:''}</div>
-    <div class="panel list">${mine.length?mine.map(c=>{const p=poste(c.posteId);return `<div class="row"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(p?p.nom:'')}</span></div>`}).join(''):`<div class="empty" style="padding:14px">${t('Aucun créneau pour l’instant.')}</div>`}</div>
+    <div class="panel list">${mine.length?mine.map(c=>{const p=poste(c.posteId);return `<div class="row"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${plink('creneau',c.id,esc(p?p.nom:''))}</span></div>`}).join(''):`<div class="empty" style="padding:14px">${t('Aucun créneau pour l’instant.')}</div>`}</div>
     ${mine.length?`<p class="muted" style="margin:0;font-size:12.5px">${t('Un empêchement ? Prévenez l’organisation')}${e.contact?` : <b>${esc(e.contact)}</b>`:''}.</p>`:''}</section>`:'';
 
   const chips=`<div class="days"><button type="button" class="chip" aria-pressed="${!S.day}" data-act="day" data-id="" style="text-transform:none">${t('Tous')}</button>${days.map(d=>{const n=cs.filter(c=>c.jour===d&&left(c)>0).length;return `<button type="button" class="chip" aria-pressed="${d===S.day}" data-act="day" data-id="${d}">${esc(shortDay(d))}<small class="num">${n}</small></button>`}).join('')}</div>`;
@@ -176,7 +198,7 @@ function render(){
   groupBy(shown,c=>c.jour).forEach((dcs,d)=>{
     list+=`<h3 class="day-h">${esc(fmtDay(d))}</h3><div class="pgroups">`;
     groupBy(dcs,c=>c.posteId).forEach((pcs,pid)=>{const p=poste(pid);
-      list+=`<div class="panel pgroup"><div class="pg-h"><span class="dot" style="background:${pColor(p)}"></span><span class="pg-t">${esc(p?p.nom:'')}</span></div>${p&&p.description?`<div class="pg-d">${esc(p.description)}</div>`:''}${pcs.map(slot).join('')}</div>`});
+      list+=`<div class="panel pgroup"><div class="pg-h"><span class="dot" style="background:${pColor(p)}"></span><span class="pg-t">${p?plink('poste',p.id,esc(p.nom)):''}</span></div>${p&&p.description?`<div class="pg-d">${esc(p.description)}</div>`:''}${pcs.map(slot).join('')}</div>`});
     list+='</div>';
   });
   if(!shown.length)list=`<div class="panel empty">${cs.length?t('Aucun créneau libre avec ces filtres.'):t('Aucun créneau pour l’instant.')}</div>`;
@@ -185,7 +207,7 @@ function render(){
 }
 
 /* ---------- actions ---------- */
-function readMe(){const v=id=>{const el=$('#'+id);return el?el.value:''};S.me={prenom:v('prenom'),nom:v('nom'),tel:v('tel'),email:v('email')};ls.set('rb.me',JSON.stringify(S.me))}
+function readMe(){const v=id=>{const el=$('#'+id);return el?el.value:''};S.me={prenom:v('prenom'),nom:v('nom'),tel:v('tel'),email:v('email'),remarques:v('remarques')};ls.set('rb.me',JSON.stringify(S.me))}
 const ME_FIELDS=['prenom','nom','tel','email'];
 function keepFocus(fn){const a=document.activeElement;const id=a&&a.id;const pos=a&&a.selectionStart;fn();if(id){const el=document.getElementById(id);if(el){el.focus();if(pos!=null&&el.setSelectionRange)try{el.setSelectionRange(pos,pos)}catch(e){}}}}
 
@@ -203,8 +225,9 @@ document.addEventListener('click',async e=>{
     if(!el.classList.contains('armed')){el.classList.add('armed');el.textContent=t('Confirmer ?');setTimeout(()=>{if(el.isConnected){el.classList.remove('armed');el.textContent=t('Je m’inscris')}},4000);return}
     el.disabled=true;el.textContent='…';
     try{
-      await api({action:'signup',creneauId:id,prenom,nom,tel,email,website:($('#website')||{}).value||''});
+      await api({action:'signup',creneauId:id,prenom,nom,tel,email,remarques:(S.me.remarques||'').trim(),website:($('#website')||{}).value||''});
       const c=S.creneaux.find(x=>x.id===id);const p=c&&poste(c.posteId);
+      if(S.me.remarques){S.me.remarques='';ls.set('rb.me',JSON.stringify(S.me))} /* remarque transmise : on vide le champ */
       toast(t('Merci {p} ! Inscrit·e : {poste}, {quand}.',{p:prenom,poste:p?p.nom:'',quand:c?shortDay(c.jour)+' '+hours(c):''}));
     }catch(err){toast((err&&err.message)||t('Inscription impossible. Réessayez.'))}
     try{await load()}catch(err){}
@@ -218,6 +241,7 @@ document.addEventListener('change',e=>{
 });
 /* le nom tapé met à jour « Mes créneaux » et les créneaux déjà pris */
 document.addEventListener('input',e=>{
+  if(e.target.id==='remarques'){readMe();return}
   if(!ME_FIELDS.includes(e.target.id))return;
   readMe();
   if(e.target.id==='prenom'||e.target.id==='nom'){clearTimeout(render._t);render._t=setTimeout(()=>keepFocus(render),400)}

@@ -38,10 +38,21 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </div>
     <div class="evpick">
-      <a class="btn pri sm" id="signupLink" href="inscription.php" data-i18n="S’inscrire">S’inscrire</a>
-      <a class="btn band-btn sm" id="planLink" href="index.php" data-i18n="Voir le planning">Voir le planning</a>
       <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
     </div>
+  </div>
+  <div class="wrap tabrow">
+  <nav class="tabs" aria-label="Sections">
+    <a class="tab" data-nav="plan" href="index.php" data-i18n="Planning">Planning</a>
+    <a class="tab" data-nav="dash" href="index.php" data-i18n="Tableau de bord">Tableau de bord</a>
+    <a class="tab" data-nav="bens" href="index.php" data-i18n="Bénévoles">Bénévoles</a>
+    <a class="tab" data-nav="postes" href="index.php" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</a>
+    <a class="tab" data-nav="contact" href="index.php" aria-current="page" aria-selected="true" data-i18n="Contact">Contact</a>
+  </nav>
+  <div class="tabacts">
+    <a class="btn pri sm" data-nav="signup" href="inscription.php" data-i18n="S’inscrire">S’inscrire</a>
+    <a class="btn danger fill sm" data-nav="change" href="contact.php" data-i18n="Changer / me désister">Changer / me désister</a>
+  </div>
   </div>
 </header>
 <main class="wrap" id="main"><div class="empty" data-i18n="Chargement…">Chargement…</div></main>
@@ -67,6 +78,12 @@ const isEmail=s=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s||'');
 const HTML_KEY={br:'contactHtmlBr',en:'contactHtmlEn'}[I18N.lang]||'contactHtml';
 const pageHtml=e=>e[HTML_KEY]||e.contactHtml||'';
 
+/* menu commun aux pages (mêmes onglets que index.php) : liens vers l'événement choisi */
+function navLinks(e){const id=e?encodeURIComponent(e.id):'';
+  const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',postes:'&tab=postes'};
+  document.querySelectorAll('[data-nav]').forEach(a=>{const k=a.dataset.nav;
+    a.href=k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
+  const s=document.querySelector('[data-nav="signup"]');if(s)s.hidden=!!(e&&isPast(e));}
 function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>{el.hidden=true},3000)}
 async function api(body,retry=1){
   const opt=body?{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CFG.csrf},body:JSON.stringify(body)}:{};
@@ -95,8 +112,7 @@ function renderHeader(){
   sel.disabled=!evs.length;
   const img=$('#evImg');const iu=evImgUrl(e);img.hidden=!iu;if(iu&&img.getAttribute('src')!==iu)img.src=iu;
   $('#evMeta').textContent=e?evWhen(e):t('Choisissez un événement');
-  $('#planLink').href='index.php'+q(e&&e.id);
-  $('#signupLink').href='inscription.php'+q(e&&e.id);$('#signupLink').hidden=!!(e&&isPast(e));
+  navLinks(e);
   document.title=(e?e.nom+' · ':'')+t('Contact');
 }
 
