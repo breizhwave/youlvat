@@ -11,10 +11,11 @@ SMS or e-mail, or reload the page and land in the same place. All links are rela
 | Event list | `index.php` | All events (no event selected) |
 | Event planning | `index.php?event=<event>` | Planning tab, on the day with the most shifts |
 | Planning on a day | `index.php?event=<event>&day=YYYY-MM-DD` | Planning tab on that day |
-| Other tab | `index.php?event=<event>&tab=dash\|bens\|postes` | Dashboard, volunteer list, posts & shifts |
+| Other tab | `index.php?event=<event>&tab=dash\|bens\|resps\|postes` | Dashboard, volunteer list, leads, posts & shifts |
 | **Shift** | `index.php?event=<event>&creneau=<creneau>` | The shift panel, planning on the shift's day |
 | **Volunteer** | `index.php?event=<event>&benevole=<benevole>` | The volunteer's planning panel |
 | **Post** | `index.php?event=<event>&tab=postes&poste=<poste>` | Posts tab, scrolled to the post, outlined in yellow |
+| **Lead** | `index.php?event=<event>&tab=resps&responsable=<responsable>` | Leads tab (Responsables), scrolled to the lead, outlined in yellow |
 | Sign-up | `inscription.php?event=<event>` | Public sign-up page |
 | Sign-up on a shift | `inscription.php?event=<event>#c-<creneau>` | Sign-up page, scrolled to that shift |
 | Contact | `contact.php?event=<event>` | Public contact page |

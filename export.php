@@ -2,8 +2,8 @@
 // Exports : export.php?format=csv&event=<id>  (bénévoles × créneaux)
 //           export.php?format=json            (sauvegarde complète, même forme que seed_kalanna2026.json)
 
-require_once __DIR__ . '/lib/auth.php';
-require_once __DIR__ . '/lib/tables.php';
+require_once __DIR__ . '/library/auth.php';
+require_once __DIR__ . '/library/tables.php';
 
 if (!is_admin()) {
     http_response_code(401);

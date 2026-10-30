@@ -1,7 +1,7 @@
 <?php
 // Page publique : contact de l'événement. Texte libre (modifiable par les organisateurs avec l'éditeur intégré,
 // une version par langue) + e-mail, téléphone et autres informations.
-require_once __DIR__ . '/lib/auth.php';
+require_once __DIR__ . '/library/auth.php';
 start_session();
 $setupError = null;
 try { db(); } catch (Throwable $e) { $setupError = $e instanceof DbSetupError ? $e->getMessage() : 'Connexion à la base impossible.'; }
@@ -43,10 +43,11 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
   <div class="wrap tabrow">
   <nav class="tabs" aria-label="Sections">
-    <a class="tab" data-nav="plan" href="index.php" data-i18n="Planning">Planning</a>
+    <a class="tab t-white" data-nav="plan" href="index.php" data-i18n="Planning">Planning</a>
     <a class="tab" data-nav="dash" href="index.php" data-i18n="Tableau de bord">Tableau de bord</a>
-    <a class="tab" data-nav="bens" href="index.php" data-i18n="Bénévoles">Bénévoles</a>
-    <a class="tab" data-nav="postes" href="index.php" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</a>
+    <a class="tab t-yellow" data-nav="bens" href="index.php" data-i18n="Bénévoles">Bénévoles</a>
+    <a class="tab t-yellow" data-nav="resps" href="index.php" data-i18n="Responsables">Responsables</a>
+    <a class="tab t-white" data-nav="postes" href="index.php" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</a>
     <a class="tab" data-nav="contact" href="index.php" aria-current="page" aria-selected="true" data-i18n="Contact">Contact</a>
   </nav>
   <div class="tabacts">
@@ -80,7 +81,7 @@ const pageHtml=e=>e[HTML_KEY]||e.contactHtml||'';
 
 /* menu commun aux pages (mêmes onglets que index.php) : liens vers l'événement choisi */
 function navLinks(e){const id=e?encodeURIComponent(e.id):'';
-  const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',postes:'&tab=postes'};
+  const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',resps:'&tab=resps',postes:'&tab=postes'};
   document.querySelectorAll('[data-nav]').forEach(a=>{const k=a.dataset.nav;
     a.href=k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
   const s=document.querySelector('[data-nav="signup"]');if(s)s.hidden=!!(e&&isPast(e));}

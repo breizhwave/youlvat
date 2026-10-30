@@ -41,10 +41,10 @@ app/
   api.php            API JSON unique (?action=…)
   export.php         export CSV / sauvegarde JSON (admin)
   config.php         nom de l'appli, hash du mot de passe admin, DSN
-  lib/db.php         connexion PDO, pragmas, création du schéma, migrations
-  lib/auth.php       session, connexion, jeton CSRF
-  lib/tables.php     liste blanche tables/colonnes, camelCase <-> snake_case
-  lib/html.php       nettoyage du HTML riche (si éditeur)
+  library/db.php         connexion PDO, pragmas, création du schéma, migrations
+  library/auth.php       session, connexion, jeton CSRF
+  library/tables.php     liste blanche tables/colonnes, camelCase <-> snake_case
+  library/html.php       nettoyage du HTML riche (si éditeur)
   assets/app.css     styles communs
   assets/i18n.js     traductions (si multilingue)
   database/schema.sql, seed_*.sql
@@ -107,7 +107,7 @@ Un seul point d'entrée `api.php` :
 - `POST {action: login|logout}`.
 
 Règles :
-- **Liste blanche** des tables et des colonnes modifiables (`lib/tables.php`). Rien n'est interpolé dans le SQL sans passer par elle.
+- **Liste blanche** des tables et des colonnes modifiables (`library/tables.php`). Rien n'est interpolé dans le SQL sans passer par elle.
 - **Requêtes préparées uniquement.**
 - Le front parle en camelCase, la base en snake_case ; la conversion se fait dans l'API, à un seul endroit.
 - Validation serveur de chaque champ (formats de date/heure, URL en `https://`, téléphone, longueur).
@@ -128,7 +128,7 @@ Le front recharge `action=all` toutes les 15 à 20 s et après chaque écriture.
 - **Formulaires publics** : champ piège (`website`, caché) + limite par session (ex. 20 inscriptions/heure).
 - `data/` inaccessible depuis le web (`.htaccess` `Require all denied` + fallback `Deny from all`, `index.php` vide).
 - Côté front, tout texte venant de la base est échappé avant insertion dans le DOM (`textContent` ou fonction `esc()`), jamais d'`innerHTML` brut.
-- Texte riche (éditeur) : nettoyé **côté serveur** par liste blanche de balises (`DOMDocument`, voir `lib/html.php`) et de nouveau à l'affichage côté client (`DOMParser`). Liens limités à `https:`, `http:`, `mailto:`, `tel:`.
+- Texte riche (éditeur) : nettoyé **côté serveur** par liste blanche de balises (`DOMDocument`, voir `library/html.php`) et de nouveau à l'affichage côté client (`DOMParser`). Liens limités à `https:`, `http:`, `mailto:`, `tel:`.
 
 ## Front-end
 
@@ -174,7 +174,7 @@ Sauvegarder régulièrement via `export.php` (ou en copiant `data/` quand le sit
 
 ## Check-list pour un nouveau projet
 
-- [ ] Copier `lib/db.php`, `lib/auth.php`, `lib/tables.php`, `api.php` comme squelette.
+- [ ] Copier `library/db.php`, `library/auth.php`, `library/tables.php`, `api.php` comme squelette.
 - [ ] Écrire `database/schema.sql` (clés étrangères + cascades).
 - [ ] Déclarer tables et colonnes dans la liste blanche.
 - [ ] Définir ce qui est public, ce qui est admin, et quels champs sont privés.

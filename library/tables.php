@@ -12,6 +12,15 @@ const TABLES = [
                        'req'  => ['prenom', 'nom'], 'int' => []],
     'affectations' => ['cols' => ['eventId', 'creneauId', 'benevoleId', 'statut'],
                        'req'  => ['eventId', 'creneauId', 'benevoleId'], 'int' => []],
+    // postes de responsable : besoin = nombre de personnes voulues (inscription publique tant qu'il reste de la place)
+    'responsables' => ['cols' => ['eventId', 'titre', 'besoin', 'description', 'ficheUrl'],
+                       'req'  => ['eventId'], 'int' => ['besoin']],
+    // personnes sur un poste de responsable : nom saisi ou bénévole ; écrites via data.personnes sur responsables, ou par signup_resp
+    'responsable_personnes' => ['cols' => ['eventId', 'responsableId', 'nom', 'tel', 'email', 'benevoleId'],
+                       'req'  => ['eventId', 'responsableId'], 'int' => []],
+    // liens responsable <-> créneau : écrits via creneauIds sur responsables (voir set_resp_creneaux() dans api.php)
+    'responsable_creneaux' => ['cols' => ['eventId', 'responsableId', 'creneauId'],
+                       'req'  => ['eventId', 'responsableId', 'creneauId'], 'int' => []],
 ];
 
 function snake(string $k): string
@@ -79,6 +88,11 @@ function fetch_all(PDO $pdo, bool $admin = true): array
                 'email' => mask_email($r['email'] ?? null),
             ] + $r, $rows);
         }
+        // contact d'un responsable saisi par nom : masqué comme celui d'un bénévole (le nom saisi reste public)
+        if (!$admin && $t === 'responsable_personnes') $rows = array_map(fn($r) => [
+            'tel' => mask_tel($r['tel'] ?? null),
+            'email' => mask_email($r['email'] ?? null),
+        ] + $r, $rows);
         $out[$t] = $rows;
     }
     return $out;

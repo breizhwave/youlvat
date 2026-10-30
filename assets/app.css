@@ -341,3 +341,17 @@ a.plink{color:inherit;text-decoration:none}
 a.plink:hover{text-decoration:underline;text-underline-offset:2px}
 .plink-i{width:.8em;height:.8em;margin-left:.3em;vertical-align:-.05em;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;opacity:.45}
 a.plink:hover .plink-i{opacity:.9}
+/* couleurs des onglets : Bénévoles et Responsables en jaune, Planning et Postes & créneaux en blanc pur */
+.tab.t-yellow,.tab.t-yellow:hover,.tab.t-yellow[aria-selected="true"]{color:var(--accent)}
+.tab.t-white,.tab.t-white:hover,.tab.t-white[aria-selected="true"]{color:#fff}
+/* formulaire responsable : créneaux encadrés, cases à cocher regroupées par jour */
+.chks{display:flex;flex-direction:column;gap:2px;max-height:320px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);padding:6px 10px}
+.chk-d{font-weight:600;text-transform:capitalize;margin-top:6px;color:var(--muted);font-size:12.5px}
+.chk-d:first-child{margin-top:0}
+.chk{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+.chk input{width:auto;margin:0}
+.chk .mono{white-space:nowrap;flex:none;min-width:7.5em}
+/* personnes d'un poste de responsable : nom, puis tél et e-mail (masqués pour le public) */
+.pers-l{display:flex;flex-direction:column;gap:4px}
+.pers{display:flex;flex-direction:column;gap:1px;color:var(--ink);font-weight:500}
+.pers .mono{font-weight:400}

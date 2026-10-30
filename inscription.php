@@ -1,6 +1,6 @@
 <?php
 // Page publique : les bénévoles s'inscrivent eux-mêmes sur un créneau (prénom, nom, téléphone et e-mail, sans compte).
-require_once __DIR__ . '/lib/auth.php';
+require_once __DIR__ . '/library/auth.php';
 start_session();
 $setupError = null;
 try { db(); } catch (Throwable $e) { $setupError = $e instanceof DbSetupError ? $e->getMessage() : 'Connexion à la base impossible.'; }
@@ -41,10 +41,11 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
   <div class="wrap tabrow">
   <nav class="tabs" aria-label="Sections">
-    <a class="tab" data-nav="plan" href="index.php" data-i18n="Planning">Planning</a>
+    <a class="tab t-white" data-nav="plan" href="index.php" data-i18n="Planning">Planning</a>
     <a class="tab" data-nav="dash" href="index.php" data-i18n="Tableau de bord">Tableau de bord</a>
-    <a class="tab" data-nav="bens" href="index.php" data-i18n="Bénévoles">Bénévoles</a>
-    <a class="tab" data-nav="postes" href="index.php" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</a>
+    <a class="tab t-yellow" data-nav="bens" href="index.php" data-i18n="Bénévoles">Bénévoles</a>
+    <a class="tab t-yellow" data-nav="resps" href="index.php" data-i18n="Responsables">Responsables</a>
+    <a class="tab t-white" data-nav="postes" href="index.php" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</a>
     <a class="tab" data-nav="contact" href="index.php" data-i18n="Contact">Contact</a>
   </nav>
   <div class="tabacts">
@@ -63,7 +64,7 @@ const {t,tn}=I18N;
 I18N.applyStatic();
 const CFG=window.REGIE||{};
 const COLORS=['#3B6FD8','#D8573B','#2E9E7A','#9B59C7','#C99A1A','#D44C8C','#3E98B3','#7A8B2E'];
-const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],eventId:new URLSearchParams(location.search).get('event')||null,day:'',poste:'',full:false,me:{prenom:'',nom:'',tel:'',email:''},loaded:false};
+const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],resps:[],respLinks:[],respPers:[],eventId:new URLSearchParams(location.search).get('event')||null,day:'',poste:'',full:false,me:{prenom:'',nom:'',tel:'',email:''},loaded:false};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
@@ -73,12 +74,12 @@ try{Object.assign(S.me,JSON.parse(ls.get('rb.me')||'{}'))}catch(e){}
 const tm=x=>{const p=String(x||'0:0').split(':').map(Number);return p[0]*60+(p[1]||0)};
 const dayN=j=>Math.round(Date.parse(j+'T00:00:00Z')/864e5);
 /* lien permanent vers le planning (voir permalink.md) : nom cliquable + petit symbole de lien */
-function permaUrl(k,id){const q=new URLSearchParams();if(S.eventId)q.set('event',S.eventId);if(k==='poste')q.set('tab','postes');q.set(k,id);return 'index.php?'+q}
+function permaUrl(k,id){const q=new URLSearchParams();if(S.eventId)q.set('event',S.eventId);if(k==='poste')q.set('tab','postes');if(k==='responsable')q.set('tab','resps');q.set(k,id);return 'index.php?'+q}
 const LINK_SVG='<svg class="plink-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>';
 const plink=(k,id,html)=>id?`<a class="plink" href="${esc(permaUrl(k,id))}" title="${t('Lien direct')}">${html}${LINK_SVG}</a>`:html;
 /* menu commun aux pages (mêmes onglets que index.php) : liens vers l'événement choisi */
 function navLinks(e){const id=e?encodeURIComponent(e.id):'';
-  const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',postes:'&tab=postes'};
+  const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',resps:'&tab=resps',postes:'&tab=postes'};
   document.querySelectorAll('[data-nav]').forEach(a=>{const k=a.dataset.nav;
     a.href=k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
   const s=document.querySelector('[data-nav="signup"]');if(s)s.hidden=!!(e&&isPast(e));}
@@ -97,12 +98,19 @@ const pColor=p=>COLORS[((p&&p.couleur)||0)%COLORS.length];
 const actifs=cid=>S.affs.filter(a=>a.creneauId===cid&&a.statut!=='absent');
 const left=c=>Math.max(0,(+c.besoin||0)-actifs(c.id).length);
 const norm=s=>String(s||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('fr');
-/* hors session admin, l'API ne donne que l'initiale du nom : même format que mask_nom() (lib/tables.php) */
+/* hors session admin, l'API ne donne que l'initiale du nom : même format que mask_nom() (library/tables.php) */
 const maskNom=s=>{s=String(s||'').trim();return s?s.charAt(0).toLocaleUpperCase('fr')+'. *******':''};
 function meBen(){const p=norm(S.me.prenom),n=norm(S.me.nom),m=norm(maskNom(S.me.nom));if(!p||!n)return null;return S.benevoles.find(b=>norm(b.prenom)===p&&norm(b.nom)===n)||S.benevoles.find(b=>norm(b.prenom)===p&&norm(b.nom)===m)||null}
 function myShifts(){const b=meBen();if(!b)return [];return S.affs.filter(a=>a.benevoleId===b.id&&a.statut!=='absent').map(a=>S.creneaux.find(c=>c.id===a.creneauId)).filter(c=>c&&c.eventId===S.eventId).sort((x,y)=>span(x)[0]-span(y)[0])}
 const groupBy=(arr,key)=>arr.reduce((m,x)=>{const k=key(x);if(!m.has(k))m.set(k,[]);m.get(k).push(x);return m},new Map());
 const creneaux=()=>S.creneaux.filter(c=>c.eventId===S.eventId).sort((a,b)=>span(a)[0]-span(b)[0]);
+/* postes de responsable où il reste de la place (besoin, comme un créneau ; voir index.php) */
+const persOf=rid=>S.respPers.filter(x=>x.responsableId===rid);
+const rLeft=r=>Math.max(0,(+r.besoin||1)-persOf(r.id).length);
+const rTitle=r=>String(r.titre||'').trim()||t('Responsable');
+const openResps=()=>S.resps.filter(r=>r.eventId===S.eventId&&rLeft(r)>0).sort((a,b)=>rTitle(a).localeCompare(rTitle(b),'fr'));
+const crensOfResp=rid=>S.respLinks.filter(x=>x.responsableId===rid).map(x=>S.creneaux.find(c=>c.id===x.creneauId)).filter(Boolean).sort((a,b)=>span(a)[0]-span(b)[0]);
+const ficheUrl=r=>/^https?:\/\//.test(r.ficheUrl||'')?r.ficheUrl:'';
 const placesLibres=l=>tn(l,'{n} place libre','{n} places libres');
 
 function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>{el.hidden=true},3500)}
@@ -122,7 +130,7 @@ async function api(body,retry=1){
 }
 async function load(){
   const j=await api();
-  S.events=j.events;S.postes=j.postes;S.creneaux=j.creneaux;S.benevoles=j.benevoles;S.affs=j.affectations;S.loaded=true;
+  S.events=j.events;S.postes=j.postes;S.creneaux=j.creneaux;S.benevoles=j.benevoles;S.affs=j.affectations;S.resps=j.responsables||[];S.respLinks=j.responsable_creneaux||[];S.respPers=j.responsable_personnes||[];S.loaded=true;
 }
 const evImgUrl=e=>e&&/^https:\/\//.test(e.imageUrl||'')?e.imageUrl:'';
 const isPast=e=>(e.fin||e.debut)<new Date().toISOString().slice(0,10);
@@ -203,7 +211,16 @@ function render(){
   });
   if(!shown.length)list=`<div class="panel empty">${cs.length?t('Aucun créneau libre avec ces filtres.'):t('Aucun créneau pour l’instant.')}</div>`;
 
-  m.innerHTML=`${intro}${ident}${mineHtml}<section class="sec"><h2>${t('Créneaux')}</h2>${chips}${filters}<div>${list}</div></section>`;
+  /* responsables recherchés : on s'y propose avec la même identité que pour un créneau */
+  const myResps=b?S.resps.filter(r=>r.eventId===S.eventId&&persOf(r.id).some(x=>x.benevoleId===b.id)):[];
+  const mineResp=myResps.length?`<div class="notice" style="background:var(--ok-bg);border-color:var(--ok)">${t('Vous êtes responsable de {n} créneau(x) sur cet événement.',{n:myResps.reduce((n,r)=>n+crensOfResp(r.id).length,0)})} ${myResps.map(r=>plink('responsable',r.id,t('Voir'))).join(' · ')}</div>`:'';
+  const ors=openResps().filter(r=>!myResps.includes(r));
+  const resps=ors.length?`<section class="sec"><h2>${t('Responsables recherchés')}</h2><p class="muted" style="margin:0">${t('Vous préférez encadrer une équipe ? Proposez-vous comme responsable de ces créneaux.')}</p><div class="postes">${ors.map(r=>{const cs=crensOfResp(r.id);const fu=ficheUrl(r);
+    return `<article class="panel" id="r-${esc(r.id)}"><div class="pc-h"><div><h3>${plink('responsable',r.id,esc(rTitle(r)))}</h3><div class="muted" style="font-size:13px;margin-top:3px"><span class="pill ${persOf(r.id).length?'warn':'crit'} num">${placesLibres(rLeft(r))}</span> ${tn(cs.length,'{n} créneau','{n} créneaux')}</div></div><button class="btn pri" type="button" data-act="signup-resp" data-id="${esc(r.id)}">${t('Je me propose')}</button></div>
+      ${r.description?`<div class="pc-d" style="white-space:pre-line">${esc(r.description)}</div>`:''}${fu?`<div class="pc-d"><a class="btn sm" href="${esc(fu)}" target="_blank" rel="noopener">${t('Fiche de poste')} ↗</a></div>`:''}
+      ${cs.length?`<div class="pc-c list">${cs.map(c=>{const p=poste(c.posteId);return `<div class="row" style="grid-template-columns:auto 1fr"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(p?p.nom:'')}</span></div>`}).join('')}</div>`:''}</article>`}).join('')}</div></section>`:'';
+
+  m.innerHTML=`${intro}${ident}${mineResp}${mineHtml}${resps}<section class="sec"><h2>${t('Créneaux')}</h2>${chips}${filters}<div>${list}</div></section>`;
 }
 
 /* ---------- actions ---------- */
@@ -217,18 +234,21 @@ document.addEventListener('click',async e=>{
   if(act==='day'){S.day=id;render()}
   else if(act==='copy'){const ev0=ev();const txt=`${S.me.prenom.trim()} ${S.me.nom.trim()} – ${ev0?ev0.nom:''}\n`+myShifts().map(c=>{const p=poste(c.posteId);return `• ${shortDay(c.jour)} ${hours(c)} : ${p?p.nom:''}`}).join('\n');
     try{await navigator.clipboard.writeText(txt);toast(t('Planning copié.'))}catch(err){toast(t('Copie impossible sur cet appareil.'))}}
-  else if(act==='signup'){
+  else if(act==='signup'||act==='signup-resp'){
+    const isResp=act==='signup-resp';const lab=isResp?t('Je me propose'):t('Je m’inscris');
     readMe();
     const prenom=S.me.prenom.trim(),nom=S.me.nom.trim(),tel=S.me.tel.trim(),email=S.me.email.trim();
     const miss=ME_FIELDS.find(k=>!S.me[k].trim());
     if(miss){toast(t('Indiquez d’abord vos prénom, nom, téléphone et e-mail.'));const f=$('#'+miss);f.focus();f.scrollIntoView({block:'center'});return}
-    if(!el.classList.contains('armed')){el.classList.add('armed');el.textContent=t('Confirmer ?');setTimeout(()=>{if(el.isConnected){el.classList.remove('armed');el.textContent=t('Je m’inscris')}},4000);return}
+    if(!el.classList.contains('armed')){el.classList.add('armed');el.textContent=t('Confirmer ?');setTimeout(()=>{if(el.isConnected){el.classList.remove('armed');el.textContent=lab}},4000);return}
     el.disabled=true;el.textContent='…';
     try{
-      await api({action:'signup',creneauId:id,prenom,nom,tel,email,remarques:(S.me.remarques||'').trim(),website:($('#website')||{}).value||''});
-      const c=S.creneaux.find(x=>x.id===id);const p=c&&poste(c.posteId);
+      const who={prenom,nom,tel,email,remarques:(S.me.remarques||'').trim(),website:($('#website')||{}).value||''};
+      await api(isResp?Object.assign({action:'signup_resp',responsableId:id},who):Object.assign({action:'signup',creneauId:id},who));
       if(S.me.remarques){S.me.remarques='';ls.set('rb.me',JSON.stringify(S.me))} /* remarque transmise : on vide le champ */
-      toast(t('Merci {p} ! Inscrit·e : {poste}, {quand}.',{p:prenom,poste:p?p.nom:'',quand:c?shortDay(c.jour)+' '+hours(c):''}));
+      if(isResp)toast(t('Merci {p} ! Vous êtes responsable de {n} créneau(x).',{p:prenom,n:crensOfResp(id).length}));
+      else{const c=S.creneaux.find(x=>x.id===id);const p=c&&poste(c.posteId);
+        toast(t('Merci {p} ! Inscrit·e : {poste}, {quand}.',{p:prenom,poste:p?p.nom:'',quand:c?shortDay(c.jour)+' '+hours(c):''}))}
     }catch(err){toast((err&&err.message)||t('Inscription impossible. Réessayez.'))}
     try{await load()}catch(err){}
     render();
@@ -255,7 +275,7 @@ async function boot(){
   const target=h.startsWith('c-')&&S.creneaux.find(c=>c.id===h.slice(2));
   if(target){S.day=target.jour;if(!left(target))S.full=true}
   render();
-  if(target){const el=document.getElementById(h);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid var(--accent)'}}
+  if(target||h.startsWith('r-')){const el=document.getElementById(h);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid var(--accent)'}}
   setInterval(async()=>{
     if(document.hidden)return;const a=document.activeElement;if(a&&ME_FIELDS.includes(a.id))return;
     try{await load();keepFocus(render)}catch(e){}

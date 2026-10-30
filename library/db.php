@@ -115,6 +115,49 @@ function migrate(PDO $pdo): void
     foreach (['image_url', 'contact_tel', 'contact_infos', 'contact_html', 'contact_html_br', 'contact_html_en', 'appel', 'appel_br', 'appel_en'] as $c) {
         if (!in_array($c, $cols, true)) $pdo->exec("ALTER TABLE events ADD COLUMN $c TEXT");
     }
+    // tables ajoutées depuis (responsables…) : le schéma n'utilise que des CREATE … IF NOT EXISTS
+    $n = $pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'responsable_creneaux'")->fetchColumn();
+    if (!$n) $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+    // 1res versions de responsables (une seule personne : colonnes nom, puis benevole_id) : table reconstruite sans elles,
+    // et chaque personne passe dans responsable_personnes. SQLite ne sait pas retirer une colonne NOT NULL.
+    // foreign_keys coupé le temps de l'opération, sinon DROP TABLE effacerait les liens avec les créneaux.
+    $rcols = fn() => array_column($pdo->query('PRAGMA table_info(responsables)')->fetchAll(), 'name');
+    if (in_array('nom', $rcols(), true)) {
+        $pdo->exec('PRAGMA foreign_keys = OFF');
+        try {
+            tx($pdo, function () use ($pdo, $rcols) {
+                $old = $rcols();
+                if (!in_array('nom', $old, true)) return; // fait entre-temps
+                $ben = in_array('benevole_id', $old, true) ? 'benevole_id' : 'NULL';
+                $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql')); // crée responsable_personnes
+                $pdo->exec("INSERT INTO responsable_personnes (id, event_id, responsable_id, nom, benevole_id)
+                            SELECT lower(hex(randomblob(8))), event_id, id, NULLIF(TRIM(nom), ''), $ben FROM responsables
+                             WHERE COALESCE(TRIM(nom), '') <> '' OR $ben IS NOT NULL");
+                // ordre recommandé par SQLite : nouvelle table, copie, suppression de l'ancienne, puis renommage de la nouvelle
+                // (renommer l'ancienne ferait pointer les clés étrangères des autres tables vers elle)
+                $pdo->exec("CREATE TABLE responsables_v3 (
+                    id TEXT PRIMARY KEY,
+                    event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+                    titre TEXT,
+                    besoin INTEGER NOT NULL DEFAULT 1 CHECK (besoin >= 1),
+                    description TEXT,
+                    fiche_url TEXT,
+                    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+                    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')))");
+                $pdo->exec('INSERT INTO responsables_v3 (id, event_id, description, fiche_url, created_at, updated_at)
+                            SELECT id, event_id, description, fiche_url, created_at, updated_at FROM responsables');
+                $pdo->exec('DROP TABLE responsables');
+                $pdo->exec('ALTER TABLE responsables_v3 RENAME TO responsables');
+                $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resp_event ON responsables(event_id)');
+            });
+        } finally {
+            $pdo->exec('PRAGMA foreign_keys = ON');
+        }
+    }
+    $pcols = array_column($pdo->query('PRAGMA table_info(responsable_personnes)')->fetchAll(), 'name');
+    foreach (['tel', 'email'] as $c) {
+        if (!in_array($c, $pcols, true)) $pdo->exec("ALTER TABLE responsable_personnes ADD COLUMN $c TEXT");
+    }
 }
 
 function new_id(): string

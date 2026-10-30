@@ -87,7 +87,7 @@ strings generated in PHP (`bin2hex(random_bytes(8))`); imported data keeps reada
 
 - **Night slots.** A créneau starting before 06:00 belongs to the *night* of its `jour`:
   `jour = 2026-12-31, 00:00–05:00` is the night from the 31st to the 1st. If `fin < debut`, the slot
-  goes past midnight. The same logic exists in PHP (`creneau_span()` in `lib/tables.php`) and in JavaScript (`span()`).
+  goes past midnight. The same logic exists in PHP (`creneau_span()` in `library/tables.php`) and in JavaScript (`span()`).
 - **Filling.** A créneau is full when the number of affectations not marked `absent` reaches `besoin`.
   Public sign-up checks this inside the `INSERT` itself, so two people can never take the last place.
 - **Cascades.** Deleting an event, a poste or a créneau deletes everything below it
@@ -96,15 +96,15 @@ strings generated in PHP (`bin2hex(random_bytes(8))`); imported data keeps reada
 - **Privacy.** Volunteer names are public. `tel`, `email` and `notes` are removed from API answers
   unless an organiser is logged in. The event contact fields are public on purpose.
 - **Rich text** (`contact_html*`, `appel*`) is cleaned on the server against a tag whitelist
-  (`lib/html.php`) and again in the browser before display.
+  (`library/html.php`) and again in the browser before display.
 
 ## Life cycle
 
-- **Creation.** On first run, `lib/db.php` creates the file from `database/schema.sql` and, if
+- **Creation.** On first run, `library/db.php` creates the file from `database/schema.sql` and, if
   `seed_on_create` is on, loads `seed_file` from `database/`: `seed_demo.sql` (a small English demo
   event, the default) or `seed_kalanna2026.sql` (Fest-noz Vras Kalanna 2026: 24 postes, 56 créneaux).
 - **Upgrades.** Columns added after the first version are created automatically on existing
-  databases (`migrate()` in `lib/db.php`), so an update by FTP never needs a manual SQL step.
+  databases (`migrate()` in `library/db.php`), so an update by FTP never needs a manual SQL step.
 - **Protection.** `data/` and `database/` refuse web access (`.htaccess` + empty `index.php`;
   `protect_dir()` recreates them in `data/` if they go missing).
 - **Deploying.** `git ftp push` never uploads `data/regie.sqlite` (it is in `.gitignore`). Uploading
@@ -122,7 +122,7 @@ SQLite allows one writer at a time. The app relies on three settings to make tha
    `dbMode` in `api.php?action=all` (`wal` expected).
 2. **A 5-second wait** (`PRAGMA busy_timeout = 5000`): a second write waits for the first one
    (which takes about a millisecond) instead of failing.
-3. **Transactions that take the write lock first** (`tx()` in `lib/db.php`, `BEGIN IMMEDIATE`).
+3. **Transactions that take the write lock first** (`tx()` in `library/db.php`, `BEGIN IMMEDIATE`).
    Read cursors are closed before, otherwise SQLite fails at once instead of waiting.
 
 ```mermaid

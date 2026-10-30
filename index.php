@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/lib/auth.php';
+require_once __DIR__ . '/library/auth.php';
 start_session();
 $setupError = null;
 try { db(); } catch (Throwable $e) { $setupError = $e instanceof DbSetupError ? $e->getMessage() : 'Connexion à la base impossible : ' . $e->getMessage(); }
@@ -53,10 +53,11 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
   <div class="wrap tabrow">
   <nav class="tabs" role="tablist" aria-label="Sections">
-    <button class="tab" role="tab" data-tab="plan" type="button" data-i18n="Planning">Planning</button>
+    <button class="tab t-white" role="tab" data-tab="plan" type="button" data-i18n="Planning">Planning</button>
     <button class="tab" role="tab" data-tab="dash" type="button" data-i18n="Tableau de bord">Tableau de bord</button>
-    <button class="tab" role="tab" data-tab="bens" type="button" data-i18n="Bénévoles">Bénévoles</button>
-    <button class="tab" role="tab" data-tab="postes" type="button" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</button>
+    <button class="tab t-yellow" role="tab" data-tab="bens" type="button" data-i18n="Bénévoles">Bénévoles</button>
+    <button class="tab t-yellow" role="tab" data-tab="resps" type="button" data-i18n="Responsables">Responsables</button>
+    <button class="tab t-white" role="tab" data-tab="postes" type="button" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</button>
     <a class="tab" id="contactTab" href="contact.php" data-i18n="Contact">Contact</a>
   </nav>
   <div class="tabacts">
@@ -76,9 +77,9 @@ window.REGIE=<?= json_encode($boot, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON
 const {t,tn}=I18N;
 I18N.applyStatic();
 const COLORS=['#3B6FD8','#D8573B','#2E9E7A','#9B59C7','#C99A1A','#D44C8C','#3E98B3','#7A8B2E'];
-const COLS={events:'events',postes:'postes',creneaux:'creneaux',benevoles:'benevoles',affs:'affectations'};
+const COLS={events:'events',postes:'postes',creneaux:'creneaux',benevoles:'benevoles',affs:'affectations',resps:'responsables'};
 const STATUTS=[['prevu',t('Prévu')],['present',t('Présent')],['absent',t('Absent')]];
-const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],eventId:null,tab:'plan',day:null,dayPinned:false,q:'',pq:'',cq:'',pres:null,ro:true};
+const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],resps:[],respLinks:[],respPers:[],eventId:null,tab:'plan',day:null,dayPinned:false,q:'',pq:'',cq:'',pres:null,ro:true};
 const DR={kind:null,id:null,extra:null};
 const CFG=window.REGIE||{};
 const REFRESH_MS=15000;
@@ -92,31 +93,34 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
      ?event=<id>&creneau=<id>    ouvre le créneau (sur son jour)
      ?event=<id>&benevole=<id>   ouvre la fiche planning du bénévole
      ?event=<id>&tab=postes&poste=<id>   onglet Postes, carte du poste mise en évidence
-   event peut être omis : il est déduit du créneau, du poste ou de la dernière affectation du bénévole. */
-const TABS=['plan','dash','bens','postes'];
+     ?event=<id>&tab=resps&responsable=<id>   onglet Responsables, carte du responsable mise en évidence
+   event peut être omis : il est déduit du créneau, du poste, du responsable ou de la dernière affectation du bénévole. */
+const TABS=['plan','dash','bens','resps','postes'];
 function readUrl(){
   const q=new URLSearchParams(location.search);
   S.eventId=q.get('event')||null;
   S.tab=TABS.includes(q.get('tab'))?q.get('tab'):'plan';
   const d=q.get('day');S.dayPinned=/^\d{4}-\d{2}-\d{2}$/.test(d||'');S.day=S.dayPinned?d:null;
-  S.link={creneau:q.get('creneau'),benevole:q.get('benevole'),poste:q.get('poste')};
+  S.link={creneau:q.get('creneau'),benevole:q.get('benevole'),poste:q.get('poste'),responsable:q.get('responsable')};
 }
 readUrl();
 function pageUrl(){
   const q=new URLSearchParams(location.search);
-  ['tab','day','creneau','benevole','poste'].forEach(k=>q.delete(k));
+  ['tab','day','creneau','benevole','poste','responsable'].forEach(k=>q.delete(k));
   if(S.eventId)q.set('event',S.eventId);
   if(S.tab!=='plan')q.set('tab',S.tab);
   else if(S.dayPinned&&S.day)q.set('day',S.day);
   if(DR.kind==='cren')q.set('creneau',DR.id);
   else if(DR.kind==='ben')q.set('benevole',DR.id);
   else if(S.tab==='postes'&&S.link.poste)q.set('poste',S.link.poste);
+  else if(S.tab==='resps'&&S.link.responsable)q.set('responsable',S.link.responsable);
   const s=q.toString();return location.pathname+(s?'?'+s:'');
 }
 const linkUrl=()=>new URL(pageUrl(),location.href).href;
 /* lien permanent (voir permalink.md) : nom de poste / bénévole / créneau cliquable + petit symbole de lien,
    seulement là où l'élément n'a pas déjà une autre action (ligne cliquable, bouton…) */
-function permaUrl(k,id){const q=new URLSearchParams();if(S.eventId)q.set('event',S.eventId);if(k==='poste')q.set('tab','postes');q.set(k,id);return 'index.php?'+q}
+const CARD_TAB={poste:'postes',responsable:'resps'};
+function permaUrl(k,id){const q=new URLSearchParams();if(S.eventId)q.set('event',S.eventId);if(CARD_TAB[k])q.set('tab',CARD_TAB[k]);q.set(k,id);return 'index.php?'+q}
 const LINK_SVG='<svg class="plink-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>';
 const plink=(k,id,html)=>id?`<a class="plink" href="${esc(permaUrl(k,id))}" data-act="plink" data-k="${k}" data-id="${esc(id)}" title="${t('Lien direct')}">${html}${LINK_SVG}</a>`:html;
 function go(){const u=pageUrl();if(u!==location.pathname+location.search)history.pushState(null,'',u);render()}
@@ -129,10 +133,12 @@ function applyLink(first){
     if(b){if(first&&!S.eventId){const a=S.affs.filter(x=>x.benevoleId===b.id).sort((x,y)=>String(y.createdAt).localeCompare(x.createdAt))[0];S.eventId=a?a.eventId:null}
       if(S.eventId){openDr('ben',b.id);return}}}
   else if(L.poste){const p=poste(L.poste);if(p&&first&&!S.eventId)S.eventId=p.eventId;if(p&&p.eventId===S.eventId)S.tab='postes'}
+  else if(L.responsable){const r=resp(L.responsable);if(r&&first&&!S.eventId)S.eventId=r.eventId;if(r&&r.eventId===S.eventId)S.tab='resps'}
   if(DR.kind==='cren'||DR.kind==='ben')closeDr(true);
 }
-/* après render() : carte du poste demandé mise en évidence et amenée à l'écran */
-function showPoste(){if(S.tab!=='postes'||!S.link.poste)return;const el=document.getElementById('p-'+S.link.poste);if(el){el.classList.add('hl');el.scrollIntoView({block:'center'})}}
+/* après render() : carte du poste (ou du responsable) demandé mise en évidence et amenée à l'écran */
+function showPoste(){const id=S.tab==='postes'?S.link.poste&&'p-'+S.link.poste:S.tab==='resps'?S.link.responsable&&'r-'+S.link.responsable:null;
+  const el=id&&document.getElementById(id);if(el){el.classList.add('hl');el.scrollIntoView({block:'center'})}}
 addEventListener('popstate',()=>{readUrl();applyLink(false);render();showPoste()});
 /* vue du planning : liste par défaut sur téléphone, grille sinon ; le choix est mémorisé */
 S.view=ls.get('rb.view')||(window.matchMedia&&matchMedia('(max-width:560px)').matches?'list':'grid');
@@ -158,6 +164,28 @@ const A=()=>S.affs.filter(a=>a.eventId===S.eventId);
 const cren=id=>S.creneaux.find(c=>c.id===id);
 const ben=id=>S.benevoles.find(b=>b.id===id);
 const poste=id=>S.postes.find(p=>p.id===id);
+const resp=id=>S.resps.find(r=>r.id===id);
+/* postes de responsable : intitulé + personnes (nom saisi par les organisateurs, public en entier, ou bénévole inscrit,
+   nom masqué pour le public) ; tant qu'il reste de la place (besoin), on peut s'y inscrire sur inscription.php#r-<id> */
+const persOf=rid=>S.respPers.filter(x=>x.responsableId===rid).sort((a,b)=>String(a.createdAt).localeCompare(b.createdAt));
+const persName=x=>x.benevoleId?bName(ben(x.benevoleId)):x.nom||'';
+const persHtml=x=>x.benevoleId?plink('benevole',x.benevoleId,esc(persName(x))):esc(x.nom);
+/* contact : fiche du bénévole, ou tél/e-mail saisis avec le nom ; masqués hors admin comme partout */
+const persContact=x=>{const c=x.benevoleId?ben(x.benevoleId)||{}:x;return [icoTel(c.tel),icoMail(c.email)].filter(Boolean).join(' · ')};
+const persLine=x=>{const c=persContact(x);return `<div class="pers"><span>${persHtml(x)}</span>${c?`<span class="mono muted">${c}</span>`:''}</div>`};
+/* nom saisi dans le formulaire : « nom, téléphone, e-mail » sur une ligne (le tél et l'e-mail sont reconnus où qu'ils soient) */
+const persToLine=x=>[x.nom,x.tel,x.email].filter(Boolean).join(', ');
+function lineToPers(l){const o={nom:[],tel:'',email:''};
+  l.split(/[;,]/).map(x=>x.trim()).filter(Boolean).forEach(x=>{if(!o.email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x))o.email=x;else if(!o.tel&&/^\+?[0-9 .()-]{6,25}$/.test(x)&&digits(x).length>=6)o.tel=x;else o.nom.push(x)});
+  return {nom:o.nom.join(', ').replace(/\s+/g,' '),tel:o.tel,email:o.email}}
+const rTitle=r=>String(r.titre||'').trim()||t('Responsable');
+const rLeft=r=>Math.max(0,(+r.besoin||1)-persOf(r.id).length);
+const respSignupUrl=rid=>'inscription.php?event='+encodeURIComponent(S.eventId||'')+'#r-'+encodeURIComponent(rid);
+const rCmp=(a,b)=>rTitle(a).localeCompare(rTitle(b),'fr')||String(a.createdAt).localeCompare(b.createdAt);
+const RS=()=>S.resps.filter(r=>r.eventId===S.eventId).sort(rCmp);
+const respsOf=cid=>S.respLinks.filter(x=>x.creneauId===cid).map(x=>resp(x.responsableId)).filter(Boolean).sort(rCmp);
+const crensOfResp=rid=>S.respLinks.filter(x=>x.responsableId===rid).map(x=>cren(x.creneauId)).filter(Boolean).sort((a,b)=>span(a)[0]-span(b)[0]);
+const ficheUrl=r=>r&&/^https?:\/\//.test(r.ficheUrl||'')?r.ficheUrl:'';
 const affsOf=cid=>S.affs.filter(a=>a.creneauId===cid);
 const actifs=cid=>affsOf(cid).filter(a=>a.statut!=='absent');
 const pColor=p=>COLORS[((p&&p.couleur)||0)%COLORS.length];
@@ -226,7 +254,7 @@ function render(){
   if(!db&&render.noDb){m.innerHTML=`<div class="notice">${t('Impossible de charger les données. Vérifiez la connexion puis rechargez la page.')}</div>`;return}
   if(!db){m.innerHTML=`<div class="empty">${t('Chargement des données…')}</div>`;return}
   if(!ev()){m.innerHTML=rList();return}
-  const html={dash:rDash,plan:rPlan,bens:rBens,postes:rPostes}[S.tab]||rPlan;
+  const html={dash:rDash,plan:rPlan,bens:rBens,resps:rResps,postes:rPostes}[S.tab]||rPlan;
   const cta=S.tab==='dash'||S.tab==='plan'?rCta():'';
   m.innerHTML=cta+html();
   if(render.focusQ){const q=(typeof render.focusQ==='string'&&$('#'+render.focusQ))||$('#q')||$('#pq');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
@@ -375,7 +403,7 @@ function rCrenSearch(){
   if(q.length>=2){
     /* « 22:00 » → « 22h », « 19:45 » → « 19h45 » (format de hours()) */
     const words=fold(q).split(/\s+/).filter(Boolean).map(w=>w.replace(/^(\d{1,2}):(\d{2})$/,(m,h,mn)=>h.padStart(2,'0')+'h'+(mn==='00'?'':mn)));
-    const found=C().filter(c=>{const p=poste(c.posteId);const n=fold([p&&p.nom,p&&p.responsable,shortDay(c.jour),fmtDay(c.jour),hours(c)].join(' '));return words.every(w=>n.includes(w))});
+    const found=C().filter(c=>{const p=poste(c.posteId);const n=fold([p&&p.nom,p&&p.responsable,...respsOf(c.id).flatMap(r=>[rTitle(r),...persOf(r.id).map(persName)]),shortDay(c.jour),fmtDay(c.jour),hours(c)].join(' '));return words.every(w=>n.includes(w))});
     /* tous les résultats, regroupés par jour (comme « Retrouver une inscription » par bénévole), puis par poste et par heure */
     const days=[...new Set(found.map(c=>c.jour))];
     res=found.length?days.map(j=>{const cs=found.filter(c=>c.jour===j).sort((a,b)=>posteNom(poste(a.posteId)).localeCompare(posteNom(poste(b.posteId)),'fr')||span(a)[0]-span(b)[0]);
@@ -456,6 +484,21 @@ function rPostes(){
   ${cards?`<div class="postes">${cards}</div>`:`<div class="panel empty">${t('Aucun poste. Créez par exemple Bar, Accueil billetterie, Catering artistes, Parking…')}</div>`}</section>`;
 }
 
+/* ---------- responsables ----------
+   chaque responsable encadre un ou plusieurs créneaux de l'événement ; lien vers sa fiche de poste */
+function rResps(){
+  const cards=RS().map(r=>{const cs=crensOfResp(r.id);const fu=ficheUrl(r);
+    const rows=cs.map(c=>{const p=poste(c.posteId);const st=fillState(c);return `<div class="row click" data-act="cren" data-id="${esc(c.id)}" style="grid-template-columns:auto 1fr auto"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(posteNom(p))}</span><span class="pill ${st==='full'?'ok':st==='part'?'warn':'crit'} num">${actifs(c.id).length}/${+c.besoin||0}</span></div>`}).join('');
+    const ps=persOf(r.id),b=+r.besoin||1,open=rLeft(r)>0;
+    return `<article class="panel${S.link.responsable===r.id?' hl':''}" id="r-${esc(r.id)}"><div class="pc-h"><div><h3>${plink('responsable',r.id,esc(rTitle(r)))}</h3><div class="muted" style="font-size:13px;margin-top:3px"><span class="pill ${ps.length>=b?'ok':ps.length?'warn':'crit'} num">${ps.length}/${b}</span> ${tn(cs.length,'{n} créneau','{n} créneaux')}</div></div><span class="actions">${open&&!isPast(ev())?`<a class="btn pri sm" href="${esc(respSignupUrl(r.id))}">${t('Je me propose')}</a>`:''}<button class="btn sm adm" type="button" data-act="resp-edit" data-id="${esc(r.id)}">${t('Modifier')}</button></span></div>
+    <div class="pc-d pers-l">${ps.length?ps.map(persLine).join(''):`<span class="muted">${t('Personne pour l’instant.')}</span>`}</div>
+    ${r.description?`<div class="pc-d" style="white-space:pre-line">${esc(r.description)}</div>`:''}
+    ${fu?`<div class="pc-d"><a class="btn sm" href="${esc(fu)}" target="_blank" rel="noopener">${t('Fiche de poste')} ↗</a></div>`:''}
+    <div class="pc-c list">${rows||`<div class="empty" style="padding:14px">${t('Aucun créneau associé.')}</div>`}</div></article>`}).join('');
+  return `<section class="sec"><div class="sec-h"><h2>${t('Responsables')}</h2><button class="btn pri adm" type="button" data-act="resp-new">${t('+ Responsable')}</button></div>
+  ${cards?`<div class="postes">${cards}</div>`:`<div class="panel empty">${S.ro?t('Aucun responsable pour l’instant.'):t('Aucun responsable. Ajoutez les personnes qui encadrent les créneaux.')}</div>`}</section>`;
+}
+
 /* ---------- tiroir ---------- */
 function openDr(kind,id,extra,form){DR.kind=kind;DR.id=id;DR.extra=extra||null;DR.form=!!form;$('#drawer').hidden=false;$('#scrim').hidden=false;renderDrawer();const f=$('#drawer input,#drawer select');if(form&&f)f.focus()}
 function closeDr(quiet){const k=DR.kind;DR.kind=null;$('#drawer').hidden=true;$('#scrim').hidden=true;
@@ -473,7 +516,7 @@ function renderDrawer(){
     `<form class="dr-b" id="loginFrm">${CFG.authEnabled?`<div class="field"><label for="pw">${t('Mot de passe')}</label><input id="pw" name="password" type="password" autocomplete="current-password" required></div><div class="actions"><button class="btn pri" type="submit">${t('Se connecter')}</button></div>`:`<div class="notice">${t('Aucun mot de passe administrateur n’est configuré. Renseignez admin_password_hash dans config.php.')}</div>`}</form>`;
 }
 function drCren(c){
-  const p=poste(c.posteId);const as=affsOf(c.id);const n=actifs(c.id).length;const b=+c.besoin||0;
+  const p=poste(c.posteId);const as=affsOf(c.id);const n=actifs(c.id).length;const b=+c.besoin||0;const rs=respsOf(c.id);
   const who=as.map(a=>{const bb=ben(a.benevoleId);const cf=conflictsOf(a.benevoleId).has(c.id)&&a.statut!=='absent';
     return `<div class="who"><span><b>${bb?plink('benevole',bb.id,esc(bName(bb))):esc(bName(bb))}</b>${bb&&bb.tel?` <span class="mono muted">${icoTel(bb.tel)}</span>`:''}${cf?` <span class="pill crit">${t('chevauchement')}</span>`:''}</span>
     ${S.ro?`<span class="pill ${a.statut==='present'?'ok':a.statut==='absent'?'crit':'neu'}">${statutLab(a)}</span><span></span>`:`<select data-act="statut" data-id="${esc(a.id)}" aria-label="${t('Statut')}">${STATUTS.map(s=>`<option value="${s[0]}"${(a.statut||'prevu')===s[0]?' selected':''}>${s[1]}</option>`).join('')}</select>
@@ -484,6 +527,7 @@ function drCren(c){
   return head(`<span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${p?plink('poste',p.id,esc(posteNom(p))):esc(posteNom(p))}</span>`,`<span style="text-transform:capitalize">${esc(fmtDay(c.jour))}</span> · <span class="mono">${esc(hours(c))}</span> · ${fmtH(dur(c))}`)+
   `<div class="dr-b">
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="pill ${fillState(c)==='full'?'ok':n?'warn':'crit'} num">${t('{n}/{b} bénévoles',{n,b})}</span>${c.note?`<span class="muted">${esc(c.note)}</span>`:''}</div>
+    ${rs.length?`<div><span class="muted">${tn(rs.length,'Responsable','Responsables')} :</span> ${rs.map(r=>plink('responsable',r.id,esc(rTitle(r)))+(persOf(r.id).length?`<div class="pers-l" style="margin:4px 0 6px">${persOf(r.id).map(persLine).join('')}</div>`:'')+(rLeft(r)&&!isPast(ev())?` <a href="${esc(respSignupUrl(r.id))}" style="font-size:12.5px">${t('Je me propose')}</a>`:'')+(ficheUrl(r)?` <a href="${esc(ficheUrl(r))}" target="_blank" rel="noopener" style="font-size:12.5px">${t('Fiche de poste')} ↗</a>`:'')).join(', ')}</div>`:''}
     <div><h3 style="margin-bottom:6px">${t('Équipe')}</h3>${who||`<div class="muted">${t('Personne n’est encore affecté.')}</div>`}</div>
     ${S.ro?(n<b?`<a class="btn pri" style="align-self:flex-start" href="${esc(signupUrl(c.id))}">${tn(b-n,'S’inscrire sur ce créneau ({n} place)','S’inscrire sur ce créneau ({n} places)')}</a>`:`<span class="muted">${t('Ce créneau est complet.')}</span>`):`<div class="field"><label for="addBen">${t('Affecter un bénévole')}</label>
       ${cand.length?`<div style="display:flex;gap:8px"><select id="addBen"><option value="">${t('Choisir…')}</option>${opts}</select><button class="btn pri" type="button" data-act="assign">${t('Affecter')}</button></div><span class="muted" style="font-size:12.5px">${t('Triés par heures déjà planifiées (les moins chargés d’abord). Les bénévoles déjà occupés sur cette plage sont grisés.')}</span>`:`<span class="muted">${t('Tous les bénévoles de l’annuaire sont déjà sur ce créneau.')}</span>`}
@@ -493,11 +537,11 @@ function drCren(c){
   </div>`;
 }
 function drBen(b){
-  const sh=shiftsOf(b.id);const cf=conflictsOf(b.id);
+  const sh=shiftsOf(b.id);const cf=conflictsOf(b.id);const rb=RS().filter(r=>persOf(r.id).some(x=>x.benevoleId===b.id));
   const rows=sh.map(({a,c})=>{const p=poste(c.posteId);return `<div class="row click" data-act="cren" data-id="${esc(c.id)}" style="padding:8px 0;grid-template-columns:auto 1fr auto"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(p?p.nom:'—')}</span>${cf.has(c.id)&&a.statut!=='absent'?`<span class="pill crit">${t('chevauchement')}</span>`:`<span class="pill ${a.statut==='present'?'ok':a.statut==='absent'?'crit':'neu'}">${statutLab(a)}</span>`}</div>`}).join('');
   return head(esc(bName(b)),b.competences?esc(b.competences):'')+
   `<div class="dr-b">
-    <dl class="kv"><dt>${t('Téléphone')}</dt><dd class="mono">${icoTel(b.tel)||'—'}</dd><dt>${t('E-mail')}</dt><dd>${icoMail(b.email)||'—'}</dd><dt>${t('Inscription')}</dt><dd class="num">${esc(fmtReg(regDate(b)))}</dd><dt>${t('Heures')}</dt><dd class="num">${t('{h} sur cet événement',{h:fmtH(hoursOf(b.id))})}</dd>${b.notes?`<dt>${t('Notes')}</dt><dd>${esc(b.notes)}</dd>`:''}</dl>
+    <dl class="kv"><dt>${t('Téléphone')}</dt><dd class="mono">${icoTel(b.tel)||'—'}</dd><dt>${t('E-mail')}</dt><dd>${icoMail(b.email)||'—'}</dd><dt>${t('Inscription')}</dt><dd class="num">${esc(fmtReg(regDate(b)))}</dd><dt>${t('Heures')}</dt><dd class="num">${t('{h} sur cet événement',{h:fmtH(hoursOf(b.id))})}</dd>${b.notes?`<dt>${t('Notes')}</dt><dd>${esc(b.notes)}</dd>`:''}${rb.length?`<dt>${tn(rb.length,'Responsable','Responsables')}</dt><dd>${rb.map(r=>plink('responsable',r.id,esc(rTitle(r)))+` <span class="muted">(${tn(crensOfResp(r.id).length,'{n} créneau','{n} créneaux')})</span>`).join('<br>')}</dd>`:''}</dl>
     <div><h3 style="margin-bottom:4px">${t('Créneaux sur {e}',{e:esc(ev()?ev().nom:t('l’événement'))})}</h3><div class="list">${rows||`<div class="muted">${t('Aucun créneau pour l’instant. Ouvrez un créneau dans le Planning pour l’affecter.')}</div>`}</div></div>
     <div class="actions"><button class="btn adm" type="button" data-act="ben-edit" data-id="${esc(b.id)}">${t('Modifier la fiche')}</button><button class="btn" type="button" data-act="copy" data-id="${esc(b.id)}">${t('Copier son planning')}</button><button class="btn" type="button" data-act="link">${t('Copier le lien')}</button></div>
   </div>`;
@@ -508,6 +552,7 @@ const FORMS={
   event:{nw:t('Nouvel événement'),edit:t('Modifier l’événement'),created:t('Événement créé'),col:'events',fields:[{k:'nom',l:t('Nom de l’événement'),req:1,ph:'Festival des Remparts 2027'},{k:'lieu',l:t('Lieu'),ph:t('Ville, site')},[{k:'debut',l:t('Premier jour'),type:'date',req:1},{k:'fin',l:t('Dernier jour'),type:'date',req:1}],{k:'imageUrl',l:t('Image / logo (adresse https)'),type:'url',ph:'https://…/logo.png'},[{k:'contact',l:t('E-mail de contact'),type:'email',ph:t('adresse e-mail')},{k:'contactTel',l:t('Téléphone de contact'),type:'tel'}],{k:'contactInfos',l:t('Autres informations de contact (une par ligne : adresse, site web, réseaux sociaux…)'),type:'textarea'},{k:'deroule',l:t('Déroulé (une étape par ligne, ex. « 20:00 Ouverture des portes »)'),type:'textarea'}]},
   poste:{nw:t('Nouveau poste'),edit:t('Modifier le poste'),created:t('Poste ajouté'),col:'postes',fields:[{k:'nom',l:t('Nom du poste'),req:1,ph:t('Bar principal')},{k:'responsable',l:t('Responsable'),ph:t('Prénom Nom')},{k:'couleur',l:t('Couleur'),type:'color'},{k:'description',l:t('Consignes'),type:'textarea',ph:t('Tenue, matériel, point de rendez-vous…')}]},
   cren:{nw:t('Nouveau créneau'),edit:t('Modifier le créneau'),created:t('Créneau ajouté'),col:'creneaux',fields:[{k:'posteId',l:t('Poste'),type:'poste',req:1},{k:'jour',l:t('Jour (nuit comprise jusqu’à 6h)'),type:'day',req:1},[{k:'debut',l:t('Début'),type:'time',req:1},{k:'fin',l:t('Fin'),type:'time',req:1}],{k:'besoin',l:t('Bénévoles nécessaires'),type:'number',req:1},{k:'note',l:t('Note'),ph:t('Ex. : briefing 30 min avant')}]},
+  resp:{nw:t('Nouveau responsable'),edit:t('Modifier le responsable'),created:t('Responsable ajouté'),col:'responsables',fields:[{k:'titre',l:t('Intitulé du poste'),ph:t('Responsable bar')},{k:'besoin',l:t('Nombre de responsables'),type:'number',req:1},{k:'noms',l:t('Responsables (un par ligne : nom, téléphone, e-mail)'),type:'textarea',ph:t('Prénom Nom, 06 12 34 56 78, prenom@exemple.bzh')},{k:'persBen',l:t('Bénévoles inscrits sur ce poste'),type:'respben'},{note:t('Tant qu’il reste de la place, le poste est proposé au public : chacun peut s’y inscrire sur la page d’inscription, comme sur un créneau.')+' '+t('Le téléphone et l’e-mail sont masqués au public, comme ceux des bénévoles.')},{k:'description',l:t('Description'),type:'textarea',ph:t('Rôle, missions, où le ou la trouver…')},{k:'ficheUrl',l:t('Lien vers la fiche de poste (https)'),type:'url',ph:'https://…'},{k:'creneauIds',l:t('Créneaux encadrés'),type:'crens'}]},
   ben:{nw:t('Nouveau bénévole'),edit:t('Modifier la fiche'),created:t('Bénévole ajouté'),col:'benevoles',fields:[[{k:'prenom',l:t('Prénom'),req:1},{k:'nom',l:t('Nom'),req:1}],[{k:'tel',l:t('Téléphone'),type:'tel'},{k:'email',l:t('E-mail'),type:'email'}],{note:t('Téléphone et e-mail sont facultatifs mais recommandés : c’est plus simple pour vous prévenir d’un changement.')+' '+t('Le nom de famille, le téléphone et l’e-mail sont masqués au public : le planning n’affiche que le prénom, l’initiale du nom, les 2 premiers caractères de l’e-mail et les 2 premiers et les 2 derniers chiffres du téléphone (ex. « Marie D. ******* · ✉ ma****@**** · ☎ 06******78 »). Les organisateurs voient tout.')},{k:'competences',l:t('Compétences'),ph:t('Permis B, PSC1, anglais, caisse…')},{k:'notes',l:t('Notes'),type:'textarea',ph:t('Disponibilités, contraintes, allergies…')}]}
 };
 const COLOR_NAMES=[t('Bleu'),t('Corail'),t('Vert'),t('Violet'),t('Moutarde'),t('Rose'),t('Cyan'),t('Olive')];
@@ -518,16 +563,26 @@ function fieldHtml(f,v){
   else if(f.type==='poste')inp=`<select id="${id}" name="${f.k}"${req}>${P().map(p=>`<option value="${esc(p.id)}"${p.id===val?' selected':''}>${esc(p.nom)}</option>`).join('')}</select>`;
   else if(f.type==='day')inp=`<select id="${id}" name="${f.k}"${req}>${eventDays().map(d=>`<option value="${d}"${d===val?' selected':''}>${esc(fmtDay(d))}</option>`).join('')}</select>`;
   else if(f.type==='size')inp=`<select id="${id}" name="${f.k}"><option value="">—</option>${['XS','S','M','L','XL','XXL'].map(s=>`<option${s===val?' selected':''}>${s}</option>`).join('')}</select>`;
+  else if(f.type==='respben'){const ps=val||[];const inIds=new Set(ps.map(x=>x.benevoleId));
+    /* bénévoles déjà sur le poste (décocher pour retirer), puis un bénévole à ajouter */
+    inp=`${ps.map(x=>`<label class="chk"><input type="checkbox" name="${f.k}" value="${esc(x.id)}" checked> ${esc(persName(x))}</label>`).join('')}<select id="${id}" name="addBen" aria-label="${t('Ajouter un bénévole')}"><option value="">${t('+ Ajouter un bénévole…')}</option>${S.benevoles.filter(b=>!inIds.has(b.id)).sort((a,b)=>bName(a).localeCompare(bName(b),'fr')).map(b=>`<option value="${esc(b.id)}">${esc(bName(b))}</option>`).join('')}</select>`;
+    return `<div class="field"><span class="lab" style="font-weight:500">${esc(f.l)}</span>${inp}</div>`}
+  else if(f.type==='crens'){const sel=new Set(val||[]);const cs=C();
+    /* cases à cocher regroupées par jour */
+    inp=cs.length?`<div class="chks" id="${id}">${eventDays().filter(d=>cs.some(c=>c.jour===d)).map(d=>`<div class="chk-d">${esc(shortDay(d))}</div>${cs.filter(c=>c.jour===d).map(c=>`<label class="chk"><input type="checkbox" name="${f.k}" value="${esc(c.id)}"${sel.has(c.id)?' checked':''}><span class="mono">${esc(hours(c))}</span> ${esc(posteNom(poste(c.posteId)))}</label>`).join('')}`).join('')}</div>`:`<span class="muted">${t('Aucun créneau pour cet événement.')}</span>`;
+    return `<div class="field"><span class="lab" style="font-weight:500">${esc(f.l)}</span>${inp}</div>`}
   else if(f.type==='color')inp=`<select id="${id}" name="${f.k}">${COLOR_NAMES.map((n,i)=>`<option value="${i}"${+val===i?' selected':''}>${n}</option>`).join('')}</select>`;
   else inp=`<input id="${id}" name="${f.k}" type="${f.type||'text'}" value="${esc(val)}" placeholder="${esc(f.ph||'')}"${f.type==='number'?' min="1" step="1"':''}${req}>`;
   return `<div class="field"><label for="${id}">${esc(f.l)}${f.req?' *':''}</label>${inp}</div>`;
 }
 function drForm(){
-  const {type,id,pre}=DR.extra;const F=FORMS[type];const src={events:S.events,postes:S.postes,creneaux:S.creneaux,benevoles:S.benevoles}[F.col];
+  const {type,id,pre}=DR.extra;const F=FORMS[type];const src={events:S.events,postes:S.postes,creneaux:S.creneaux,benevoles:S.benevoles,responsables:S.resps}[F.col];
   const cur=id?src.find(x=>x.id===id):null;const v=Object.assign({},pre||{},cur||{});
+  if(type==='resp'){if(!cur)v.besoin=1;
+    const ps=cur?persOf(cur.id):[];v.creneauIds=cur?crensOfResp(cur.id).map(c=>c.id):[];v.noms=ps.filter(x=>!x.benevoleId).map(persToLine).join('\n');v.persBen=ps.filter(x=>x.benevoleId)}
   const body=F.fields.map(f=>f.note?`<p class="muted" style="margin:-8px 0 0;font-size:12.5px">${esc(f.note)}</p>`:Array.isArray(f)?`<div class="frow">${f.map(g=>fieldHtml(g,v[g.k])).join('')}</div>`:fieldHtml(f,v[f.k])).join('');
   const blocked=type==='cren'&&!P().length;
-  const cascade={event:t('La suppression retire aussi ses postes, créneaux et affectations.'),poste:t('La suppression retire aussi ses créneaux et leurs affectations.'),cren:t('La suppression retire aussi les affectations de ce créneau.')}[type];
+  const cascade={resp:t('La suppression retire seulement ses liens avec les créneaux, qui sont conservés.'),event:t('La suppression retire aussi ses postes, créneaux et affectations.'),poste:t('La suppression retire aussi ses créneaux et leurs affectations.'),cren:t('La suppression retire aussi les affectations de ce créneau.')}[type];
   return head(cur?F.edit:F.nw,'')+
   `<form class="dr-b" id="frm" novalidate>${blocked?`<div class="notice">${t('Créez d’abord un poste.')}</div>`:body}
    <div class="actions"><button class="btn pri" type="submit"${blocked?' disabled':''}>${cur?t('Enregistrer'):t('Créer')}</button>${cur?`<button class="btn danger" type="button" data-act="del">${t('Supprimer')}</button>`:''}</div>
@@ -538,6 +593,18 @@ function openForm(type,id,pre){openDr('form',null,{type,id,pre},true)}
 async function submitForm(fd){
   const {type,id}=DR.extra;const F=FORMS[type];const data={};
   for(const [k,v] of fd.entries())data[k]=typeof v==='string'?v.trim():v;
+  if(type==='resp'){
+    if(data.ficheUrl&&!/^https?:\/\//.test(data.ficheUrl)){toast(t('L’adresse de la fiche de poste doit commencer par https:// ou http://'));return}
+    data.creneauIds=fd.getAll('creneauIds');data.besoin=Math.max(1,parseInt(data.besoin,10)||1);
+    /* personnes : envoyées en différentiel (retraits, ajouts) pour ne pas effacer une inscription publique faite pendant l'édition */
+    const ps=id?persOf(id):[];const typed=ps.filter(x=>!x.benevoleId);const keep=new Set(fd.getAll('persBen'));
+    /* une ligne = nom, téléphone, e-mail ; une ligne modifiée = l'ancienne retirée, la nouvelle ajoutée */
+    const lines=[...new Set(String(data.noms||'').split('\n').map(x=>x.trim()).filter(Boolean))].map(lineToPers);
+    if(lines.some(x=>!x.nom)){toast(t('Chaque ligne doit contenir un nom.'));return}
+    const keys=new Set(lines.map(persToLine));
+    const add=lines.filter(x=>!typed.some(y=>persToLine(y)===persToLine(x)));if(data.addBen)add.push({benevoleId:data.addBen});
+    data.personnes={remove:[...typed.filter(x=>!keys.has(persToLine(x))),...ps.filter(x=>x.benevoleId&&!keep.has(x.id))].map(x=>x.id),add};
+    ['noms','persBen','addBen'].forEach(k=>delete data[k])}
   const flat=F.fields.flat();
   const miss=flat.filter(f=>f.req&&!data[f.k]);
   if(miss.length){toast(t('À compléter : {l}',{l:miss.map(f=>f.l).join(', ')}));return}
@@ -594,7 +661,7 @@ document.addEventListener('click',async ev0=>{
     case 'cren':openLink('cren',id);break;
     case 'ben':openLink('ben',id);break;
     case 'plink':ev0.preventDefault();
-      if(el.dataset.k==='poste'){if(DR.kind)closeDr(true);S.tab='postes';S.link={poste:id};go();showPoste()}
+      if(CARD_TAB[el.dataset.k]){if(DR.kind)closeDr(true);S.tab=CARD_TAB[el.dataset.k];S.link={[el.dataset.k]:id};go();showPoste()}
       else openLink(el.dataset.k==='creneau'?'cren':'ben',id);break;
     case 'link':{let href=linkUrl();
       if(el.dataset.poste){const q=new URLSearchParams();q.set('event',S.eventId);q.set('tab','postes');q.set('poste',el.dataset.poste);href=new URL(location.pathname+'?'+q,location.href).href}
@@ -602,6 +669,8 @@ document.addEventListener('click',async ev0=>{
     case 'ev-new':openForm('event');break;
     case 'poste-new':openForm('poste');break;
     case 'poste-edit':openForm('poste',id);break;
+    case 'resp-new':openForm('resp');break;
+    case 'resp-edit':openForm('resp',id);break;
     case 'cren-new':openForm('cren',null,{posteId:el.dataset.poste||(P()[0]&&P()[0].id),jour:el.dataset.day||S.day||eventDays()[0],debut:'18:00',fin:'22:00',besoin:2});break;
     case 'cren-edit':openForm('cren',id);break;
     case 'cren-del':{const n=affsOf(id).length;if(armed(el,n?tn(n,'Confirmer (retire {n} affectation)','Confirmer (retire {n} affectations)'):t('Confirmer')))deleteCren(id);break}
@@ -645,9 +714,9 @@ $('#evEdit').addEventListener('click',()=>{if(S.eventId)openForm('event',S.event
 /* remplace le temps réel du prototype : rechargement complet après chaque écriture et toutes les 15 s */
 async function load(){
   const j=await api();
-  const snap=JSON.stringify([j.events,j.postes,j.creneaux,j.benevoles,j.affectations]);
+  const snap=JSON.stringify([j.events,j.postes,j.creneaux,j.benevoles,j.affectations,j.responsables,j.responsable_creneaux,j.responsable_personnes]);
   const changed=snap!==lastSnap;lastSnap=snap;
-  if(changed){S.events=j.events;S.postes=j.postes;S.creneaux=j.creneaux;S.benevoles=j.benevoles;S.affs=j.affectations}
+  if(changed){S.events=j.events;S.postes=j.postes;S.creneaux=j.creneaux;S.benevoles=j.benevoles;S.affs=j.affectations;S.resps=j.responsables||[];S.respLinks=j.responsable_creneaux||[];S.respPers=j.responsable_personnes||[]}
   if(!S.ro&&!j.admin){location.reload()} /* session admin expirée */
   db=true;return changed;
 }

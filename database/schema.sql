@@ -81,3 +81,47 @@ CREATE TABLE IF NOT EXISTS affectations (
 );
 CREATE INDEX IF NOT EXISTS idx_aff_event ON affectations(event_id);
 CREATE INDEX IF NOT EXISTS idx_aff_benevole ON affectations(benevole_id);
+
+-- Postes de responsable d'un événement (encadrent un ou plusieurs créneaux) : visibles du public, comme postes.responsable.
+-- besoin = nombre de personnes voulues ; tant qu'il reste de la place, le public peut s'y inscrire sur inscription.php.
+CREATE TABLE IF NOT EXISTS responsables (
+  id           TEXT PRIMARY KEY,
+  event_id     TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  titre        TEXT,               -- intitulé du poste (« Responsable bar ») ; vide = « Responsable »
+  besoin       INTEGER NOT NULL DEFAULT 1 CHECK (besoin >= 1),
+  description  TEXT,
+  fiche_url    TEXT,               -- lien vers la fiche de poste (https://…)
+  created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  updated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_resp_event ON responsables(event_id);
+
+-- Personnes sur un poste de responsable : un nom saisi par les organisateurs (public en entier, tél/e-mail masqués),
+-- ou un bénévole inscrit (nom, tél et e-mail masqués pour le public comme partout).
+CREATE TABLE IF NOT EXISTS responsable_personnes (
+  id              TEXT PRIMARY KEY,
+  event_id        TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  responsable_id  TEXT NOT NULL REFERENCES responsables(id) ON DELETE CASCADE,
+  nom             TEXT,
+  tel             TEXT,             -- contact d'un nom saisi (masqué pour le public comme celui des bénévoles)
+  email           TEXT,
+  benevole_id     TEXT REFERENCES benevoles(id) ON DELETE CASCADE,   -- bénévole inscrit : contact pris sur sa fiche
+  created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  CHECK (nom IS NOT NULL OR benevole_id IS NOT NULL),
+  UNIQUE (responsable_id, benevole_id)
+);
+CREATE INDEX IF NOT EXISTS idx_respp_resp ON responsable_personnes(responsable_id);
+CREATE INDEX IF NOT EXISTS idx_respp_benevole ON responsable_personnes(benevole_id);
+
+-- Créneaux encadrés par chaque responsable (plusieurs par responsable, et un créneau peut en avoir plusieurs).
+CREATE TABLE IF NOT EXISTS responsable_creneaux (
+  id              TEXT PRIMARY KEY,
+  event_id        TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  responsable_id  TEXT NOT NULL REFERENCES responsables(id) ON DELETE CASCADE,
+  creneau_id      TEXT NOT NULL REFERENCES creneaux(id) ON DELETE CASCADE,
+  created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  UNIQUE (responsable_id, creneau_id)
+);
+CREATE INDEX IF NOT EXISTS idx_respc_creneau ON responsable_creneaux(creneau_id);
