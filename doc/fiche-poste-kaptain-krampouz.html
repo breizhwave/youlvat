@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Responsable crêpes · Appel à bénévoles · Kalanna</title>
+<meta name="description" content="Fest-noz du réveillon Kalanna, Quimper, 31 décembre : nous recherchons un(e) responsable crêpes pour organiser et coordonner l'activité crêpes avec l'équipe bénévole.">
+<meta property="og:title" content="Appel à bénévoles · Responsable crêpes · Kalanna">
+<meta property="og:description" content="Organiser et coordonner les crêpes du fest-noz du réveillon Kalanna, de la préparation au rangement.">
+<meta property="og:image" content="https://www.fest-noz-kalanna.bzh/wp-content/uploads/2025/11/logo-3.png">
+<meta property="og:locale" content="fr_FR">
+<meta name="theme-color" content="#0b0d14">
+<link rel="icon" href="https://www.fest-noz-kalanna.bzh/wp-content/uploads/2026/10/motif-01.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  /* Police titres Kalanna : déposer CitrusGothicSolid-Regular.woff2 à côté de ce fichier
+     (copie du thème WordPress : wp-content/themes/flatsome-child/). Repli : Bebas Neue. */
+  @font-face {
+    font-family: "Citrus Gothic";
+    src: url("CitrusGothicSolid-Regular.woff2") format("woff2"),
+         url("https://www.fest-noz-kalanna.bzh/wp-content/themes/flatsome-child/CitrusGothicSolid-Regular.woff2") format("woff2");
+    font-weight: 400 700;
+    font-display: swap;
+  }
+
+  :root {
+    --nuit: #0b0d14;
+    --ardoise: #2d3342;
+    --marine: #000021;
+    --creme: #fdfbe8;
+    --jaune: #ffdd00;
+    --or: #ffd100;
+    --peche: #f6c494;
+    --texte: #ffffff;
+    --texte-doux: #d9dbe3;
+    --trait: rgba(253, 251, 232, .16);
+    --titre: "Citrus Gothic", "Bebas Neue", Impact, sans-serif;
+    --corps: "Lato", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --largeur: 1100px;
+    --rayon: 15px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ardoise);
+    color: var(--texte);
+    font-family: var(--corps);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; height: auto; display: block; }
+  a { color: inherit; }
+  .wrap { width: min(var(--largeur), 100% - 32px); margin-inline: auto; }
+
+  .degrade {
+    background: linear-gradient(260deg, #fff, var(--peche));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--peche);
+  }
+  .titre { font-family: var(--titre); font-weight: 700; line-height: 1.1; letter-spacing: .01em; text-transform: uppercase; margin: 0; }
+  .surtitre { font-family: var(--titre); font-size: 1.15rem; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 .4rem; color: #fff; }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 16px; top: 16px; z-index: 100; background: #fff; color: var(--marine); padding: 8px 12px; border-radius: 8px; }
+
+  /* ---------- En-tête ---------- */
+  .entete {
+    position: sticky; top: 0; z-index: 50;
+    background: #fff;
+    box-shadow: 0 1px 12px rgba(0, 0, 0, .18);
+  }
+  .entete .wrap { display: flex; align-items: center; justify-content: center; min-height: 70px; }
+  .entete .logo img { height: 52px; width: auto; }
+  @media (max-width: 860px) { .entete .logo img { height: 44px; } }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    background: var(--nuit) url("https://www.fest-noz-kalanna.bzh/wp-content/uploads/2026/10/bck-02.svg") center top / max(100%, 760px) auto no-repeat;
+    text-align: center;
+    padding: clamp(16px, 3vw, 36px) 0 0;
+  }
+  .guirlande { width: min(1180px, 100% - 16px); margin: 0 auto; }
+  .hero-texte { position: relative; z-index: 2; padding: clamp(18px, 3vw, 34px) 16px 0; }
+  .etiquette {
+    display: inline-block;
+    font-weight: 700; font-size: .82rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--nuit); background: var(--jaune);
+    padding: 6px 14px; border-radius: 999px;
+  }
+  .hero h1 { font-size: clamp(3rem, 9vw, 6.4rem); margin-top: 18px; }
+  .hero .lieu { font-size: clamp(1rem, 2.2vw, 1.2rem); color: var(--texte-doux); margin: 10px 0 0; }
+  .hero .lieu strong { color: #fff; }
+  .lune {
+    position: relative; z-index: 1;
+    width: min(560px, 82vw);
+    margin: clamp(28px, 5vw, 56px) auto 0;
+    margin-bottom: calc(min(560px, 82vw) * -0.5);
+  }
+
+  /* lucioles */
+  .boule {
+    position: absolute; z-index: 1; border-radius: 50%;
+    background: var(--jaune); opacity: .88;
+    animation: flotte 6s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .boule.sombre { opacity: .55; }
+  @keyframes flotte {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(6px, -18px, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .boule { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ---------- Sections ---------- */
+  section { position: relative; }
+  .bloc { padding: clamp(56px, 8vw, 104px) 0; }
+  .bloc h2 { font-size: clamp(2rem, 4.4vw, 2.9rem); }
+  .chapo { max-width: 760px; }
+  .chapo p { color: var(--texte-doux); margin: 1rem 0 0; }
+  .chapo p.fort { color: #fff; font-size: 1.12rem; }
+  .chapo .peche { color: var(--peche); font-weight: 700; }
+
+  .motif { width: 120px; margin: 0 auto 40px; }
+  .poste { text-align: left; }
+  .poste .grille { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: start; }
+  @media (min-width: 900px) { .poste .grille { grid-template-columns: 1.35fr 1fr; gap: 72px; } }
+
+  .chiffres { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .chiffres li {
+    display: flex; align-items: baseline; gap: 18px;
+    padding: 18px 22px; border: 1px solid var(--trait); border-radius: var(--rayon);
+    background: rgba(11, 13, 20, .28);
+  }
+  .chiffres b { flex: none; font-family: var(--titre); font-weight: 700; font-size: 2.2rem; line-height: 1; color: var(--jaune); min-width: 2.9em; }
+  .chiffres span { color: var(--texte-doux); line-height: 1.35; }
+
+  /* mission */
+  .mission { background: var(--nuit); overflow: hidden; }
+  .mission::before {
+    content: ""; position: absolute; inset: 0;
+    background: url("https://www.fest-noz-kalanna.bzh/wp-content/uploads/2026/10/motif-01.svg") right -60px top 40px / 300px auto no-repeat;
+    opacity: .06; pointer-events: none;
+  }
+  .mission .entete-bloc { max-width: 760px; margin-bottom: 44px; }
+  .mission .entete-bloc p { color: var(--texte-doux); margin: 1rem 0 0; }
+  .etapes { display: grid; gap: 22px; grid-template-columns: 1fr; align-items: start; }
+  .nowrap { white-space: nowrap; }
+  @media (min-width: 900px) { .etapes { grid-template-columns: repeat(3, 1fr); } }
+  .etape {
+    position: relative;
+    border: 1px solid var(--trait); border-radius: var(--rayon);
+    background: linear-gradient(180deg, rgba(45, 51, 66, .55), rgba(45, 51, 66, .25));
+    padding: 26px 24px 10px;
+  }
+  .etape header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .etape .num {
+    flex: none; width: 42px; height: 42px; border-radius: 50%;
+    background: var(--jaune); color: var(--nuit);
+    display: grid; place-items: center;
+    font-family: var(--titre); font-weight: 700; font-size: 1.35rem;
+    box-shadow: 0 0 22px rgba(255, 221, 0, .35);
+  }
+  .etape h3 { font-size: 1.6rem; }
+  .etape ul { list-style: none; margin: 0; padding: 0; }
+  .etape li { position: relative; padding: 0 0 18px 20px; color: var(--texte-doux); font-size: .98rem; }
+  .etape li::before {
+    content: ""; position: absolute; left: 0; top: .62em;
+    width: 8px; height: 8px; border-radius: 50%; background: var(--creme);
+  }
+  .etape li strong { color: #fff; }
+
+  /* profil */
+  .profil .grille { display: grid; gap: 40px; grid-template-columns: 1fr; align-items: center; }
+  @media (min-width: 900px) { .profil .grille { grid-template-columns: 1.1fr 1fr; gap: 72px; } }
+  .profil p.intro { font-size: 1.15rem; margin: 1.1rem 0 0; }
+  .qualites { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+  .qualites li {
+    border: 1px solid var(--peche); color: var(--peche);
+    padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: .88rem; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .encart {
+    position: relative;
+    background: var(--creme); color: var(--nuit);
+    border-radius: 22px; padding: 34px 32px 32px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .28);
+  }
+  .encart .titre { font-size: 2rem; color: var(--ardoise); }
+  .encart p { margin: .8rem 0 0; font-size: 1.08rem; color: #2a2f3c; }
+  .encart::after {
+    content: ""; position: absolute; right: -14px; top: -14px;
+    width: 34px; height: 34px; border-radius: 50%; background: var(--jaune);
+    box-shadow: 0 0 22px rgba(255, 221, 0, .5);
+  }
+
+  /* appel */
+  .appel {
+    text-align: center; overflow: hidden;
+    background: var(--nuit) url("https://www.fest-noz-kalanna.bzh/wp-content/uploads/2026/10/bck-02.svg") center top / max(100%, 760px) auto no-repeat;
+  }
+  .appel .motif { width: 150px; margin-bottom: 30px; }
+  .appel h2 { max-width: 820px; margin-inline: auto; }
+  .appel p { color: var(--texte-doux); font-size: 1.15rem; margin: 1rem 0 0; }
+  .appel p.courriel { margin-top: 1.4rem; font-size: clamp(1.3rem, 4vw, 1.7rem); font-weight: 700; color: #fff; overflow-wrap: anywhere; }
+  .courriel a { color: var(--jaune); text-decoration: none; border-bottom: 2px solid currentColor; }
+  .courriel a:hover, .courriel a:focus-visible { color: #fff; }
+  .bouton {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 30px; padding: 16px 30px;
+    background: #fff; color: #555; text-decoration: none;
+    border-radius: var(--rayon);
+    font-weight: 700; font-size: 1.1rem; letter-spacing: .03em; text-transform: uppercase;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .3);
+    transition: transform .15s ease, color .15s ease;
+  }
+  .bouton:hover, .bouton:focus-visible { color: var(--marine); transform: translateY(-2px); }
+  .bouton span { font-size: 1.2em; line-height: 1; }
+
+  /* pied */
+  .pied { background: var(--marine); color: #fff; padding: 56px 0 40px; text-align: center; font-size: .95rem; }
+  .pied .colonnes { display: grid; gap: 28px; grid-template-columns: 1fr; justify-items: center; }
+  @media (min-width: 760px) { .pied .colonnes { grid-template-columns: repeat(3, 1fr); align-items: start; } }
+  .pied ul { list-style: none; margin: 0; padding: 0; line-height: 1.9; }
+  .pied a { text-decoration: none; }
+  .pied a:hover, .pied a:focus-visible { text-decoration: underline; }
+  .reseaux { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .reseaux a { border: 2px solid rgba(255, 255, 255, .85); border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: .85rem; }
+  .pied .mention { margin-top: 40px; color: rgba(255, 255, 255, .6); font-size: .82rem; }
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+
+<header class="entete">
+  <div class="wrap">
+    <a class="logo" href="https://www.fest-noz-kalanna.bzh/" aria-label="Fest-noz vras Kalanna, retour au site">
+      <img src="https://www.fest-noz-kalanna.bzh/wp-content/uploads/2025/11/logo-3.png" alt="Fest-noz vras Kalanna" width="138" height="55">
+    </a>
+  </div>
+</header>
+
+<main id="contenu">
+
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="titre-poste">
+    <span class="boule" style="width:28px;height:20px;left:6%;top:120px;animation-duration:5s"></span>
+    <span class="boule sombre" style="width:22px;height:22px;left:90%;top:90px;animation-duration:7s"></span>
+    <span class="boule" style="width:18px;height:18px;left:16%;top:62%;animation-duration:6s"></span>
+    <span class="boule" style="width:30px;height:30px;left:83%;top:46%;animation-duration:8s"></span>
+    <span class="boule sombre" style="width:16px;height:16px;left:66%;top:30%;animation-duration:5.5s"></span>
+    <span class="boule" style="width:14px;height:14px;left:30%;top:38%;animation-duration:6.5s"></span>
+    <span class="boule sombre" style="width:26px;height:26px;left:4%;top:82%;animation-duration:7.5s"></span>
+
+    <img class="guirlande" src="https://www.fest-noz-kalanna.bzh/wp-content/uploads/2026/10/kalanna.svg" alt="Kalanna" width="1180" height="285">
+
+    <div class="hero-texte">
+      <span class="etiquette">Appel à bénévoles</span>
+      <h1 id="titre-poste" class="titre degrade">Responsable crêpes</h1>
+      <p class="lieu"><strong>Fest-noz du réveillon Kalanna</strong> · Quimper · 31&nbsp;décembre</p>
+    </div>
+
+    <img class="lune" src="https://www.fest-noz-kalanna.bzh/wp-content/uploads/2026/10/lune.svg" alt="" width="560" height="560">
+  </section>
+
+  <!-- Le poste -->
+  <section class="bloc poste" aria-labelledby="titre-le-poste">
+    <div class="wrap">
+      <div class="grille">
+        <div class="chapo">
+          <p class="surtitre">Fiche de poste bénévole</p>
+          <h2 id="titre-le-poste" class="titre degrade">Le poste</h2>
+          <p class="fort">Pour préparer le fest-noz du réveillon Kalanna, nous recherchons un(e) responsable crêpes pour organiser et coordonner l’ensemble de l’activité crêpes, de la préparation en amont au rangement après la soirée.</p>
+          <p>Il ne s’agit pas de tout faire mais de réfléchir et de s’assurer que l’ensemble des étapes seront assurées de manière cohérente par l’équipe bénévoles. En gros, il faut s’assurer <span class="peche">qu’il n’y aura pas de trous dans la raquette (ni dans les crêpes&nbsp;!)</span>.</p>
+        </div>
+        <ul class="chiffres" aria-label="En bref">
+          <li><b>31 déc.</b><span>Fest-noz du réveillon à Quimper</span></li>
+          <li><b>8</b><span>billigs à réunir et à vérifier</span></li>
+          <li><b>1</b><span>équipe de bénévoles à coordonner</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- La mission -->
+  <section class="bloc mission" aria-labelledby="titre-mission">
+    <div class="wrap">
+      <div class="entete-bloc">
+        <p class="surtitre">De la pâte au rangement</p>
+        <h2 id="titre-mission" class="titre degrade">La mission</h2>
+      </div>
+
+      <div class="etapes">
+        <article class="etape">
+          <header><span class="num" aria-hidden="true">1</span><h3 class="titre">En amont</h3></header>
+          <ul>
+            <li><strong>Anticiper les besoins&nbsp;:</strong> s’assurer de la disponibilité de 8&nbsp;billigs (écoles Diwan, billigs perso…), vérifier leur fonctionnement et recenser le matériel nécessaire (spanell, rozells, torchons, ustensiles, consommables…).</li>
+            <li><strong>Organiser la préparation&nbsp;:</strong> calculer les quantités de pâte (quelques documents existent déjà), prévoir les ingrédients et un horaire pour sa fabrication (probablement dans la cuisine de la salle Dan ar Braz).</li>
+            <li><strong>Mobiliser les bénévoles</strong> à partir de la liste de bénévoles recensés sur <span class="nowrap">youl-vat.bzh</span>.</li>
+          </ul>
+        </article>
+
+        <article class="etape">
+          <header><span class="num" aria-hidden="true">2</span><h3 class="titre">Le jour J</h3></header>
+          <ul>
+            <li><strong>Préparer le stand&nbsp;:</strong> coordonner l’installation, l’affichage des tarifs (réalisés par la commission décoration), les fonds de caisse et le système de tickets ou de commandes.</li>
+            <li><strong>Organiser le service&nbsp;:</strong> prévoir les emballages, les assiettes et les couverts si nécessaire, ainsi que le bon déroulement des ventes dans le respect des valeurs de durabilité ou d’éco-conception de l’événement.</li>
+            <li><strong>Veiller au bon fonctionnement</strong> en termes d’hygiène et de sécurité.</li>
+          </ul>
+        </article>
+
+        <article class="etape">
+          <header><span class="num" aria-hidden="true">3</span><h3 class="titre">Après la fête</h3></header>
+          <ul>
+            <li><strong>Organiser le rangement&nbsp;:</strong> nettoyer, ranger le matériel et faire le bilan avec l’équipe après l’événement.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Le profil -->
+  <section class="bloc profil" aria-labelledby="titre-profil">
+    <div class="wrap">
+      <div class="grille">
+        <div>
+          <p class="surtitre">Vous&nbsp;?</p>
+          <h2 id="titre-profil" class="titre degrade">Le profil recherché</h2>
+          <p class="intro">Une personne organisée, dynamique et capable de coordonner une équipe de bénévoles, qui aime travailler en collectif et contribuer à la réussite d’un bel événement festif.</p>
+          <ul class="qualites" aria-label="Qualités">
+            <li>Organisé·e</li>
+            <li>Dynamique</li>
+            <li>Esprit collectif</li>
+          </ul>
+        </div>
+        <aside class="encart">
+          <p class="titre">Pas besoin de tout faire seul(e)</p>
+          <p>L’objectif est de s’entourer d’une équipe de bénévoles et de bien répartir les tâches&nbsp;!</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Appel -->
+  <section class="bloc appel" aria-labelledby="titre-appel">
+    <div class="wrap">
+      <img class="motif" src="https://www.fest-noz-kalanna.bzh/wp-content/uploads/2026/10/motif-01.svg" alt="" width="150" height="172">
+      <h2 id="titre-appel" class="titre degrade">Envie de prendre en charge les crêpes du réveillon&nbsp;?</h2>
+      <p>Faites-vous connaître auprès de l’association&nbsp;:</p>
+      <p class="courriel"><a href="mailto:degemer@kalanna.bzh">degemer@kalanna.bzh</a></p>
+      <a class="bouton" href="https://youlvat.kalanna.bzh/?event=kalanna26&tab=resps">JE m'inscris pour ce poste RESPONSABLES KRAMPOUZ (youlvat.kalanna.bzh)<span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="pied">
+  <div class="wrap">
+    <div class="colonnes">
+      <ul>
+        <li><a href="https://www.fest-noz-kalanna.bzh/">Accueil</a></li>
+        <li><a href="https://www.fest-noz-kalanna.bzh/programmation/">Programmation</a></li>
+        <li><a href="https://www.fest-noz-kalanna.bzh/billetterie/">Billetterie</a></li>
+        <li><a href="https://www.fest-noz-kalanna.bzh/infos-pratiques/">Infos pratiques</a></li>
+        <li><a href="https://www.fest-noz-kalanna.bzh/partenaires/">Partenaires</a></li>
+        <li><a href="https://www.fest-noz-kalanna.bzh/contact/">Contact</a></li>
+      </ul>
+      <ul>
+        <li><a href="https://www.fest-noz-kalanna.bzh/mentions-legales/">Mentions légales</a></li>
+      </ul>
+      <div class="reseaux">
+        <a href="https://www.facebook.com/KalannaKemper" rel="noopener">Facebook</a>
+        <a href="https://www.instagram.com/fest.noz.kalanna" rel="noopener">Instagram</a>
+        <a href="mailto:demat@fest-noz-kalanna.bzh">demat@fest-noz-kalanna.bzh</a>
+      </div>
+    </div>
+    <p class="mention">Fest-noz vras Kalanna · Kemper / Quimper</p>
+  </div>
+</footer>
+</body>
+</html>
