@@ -18,6 +18,7 @@ SMS or e-mail, or reload the page and land in the same place. All links are rela
 | **Lead** | `index.php?event=<event>&tab=resps&responsable=<responsable>` | Leads tab (Responsables), scrolled to the lead, outlined in yellow |
 | Sign-up | `inscription.php?event=<event>` | Public sign-up page |
 | Sign-up on a shift | `inscription.php?event=<event>#c-<creneau>` | Sign-up page, scrolled to that shift |
+| Lead sign-up | `inscription.php?event=<event>&responsable=<responsable>` | Sign-up page for that lead role only (old `#r-<id>` links still work) |
 | Contact | `contact.php?event=<event>` | Public contact page |
 
 Optional parameter on every page: `lang=br|fr|en` (remembered in the browser afterwards).

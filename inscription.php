@@ -17,6 +17,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="assets/app.css?v=<?= filemtime(__DIR__ . '/assets/app.css') ?>">
 <script src="assets/i18n.js?v=<?= filemtime(__DIR__ . '/assets/i18n.js') ?>"></script>
+<script src="assets/nav.js?v=<?= filemtime(__DIR__ . '/assets/nav.js') ?>"></script>
 </head>
 <body class="ro">
 <header class="band">
@@ -36,7 +37,7 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </div>
     <div class="evpick">
-      <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
+      <div class="langrow"><div class="langsw" role="group" aria-label="Yezh / Langue"></div><button class="burger" id="burger" type="button" aria-expanded="false" title="Menu" data-i18n-title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
     </div>
   </div>
   <div class="wrap tabrow">
@@ -64,7 +65,7 @@ const {t,tn}=I18N;
 I18N.applyStatic();
 const CFG=window.REGIE||{};
 const COLORS=['#3B6FD8','#D8573B','#2E9E7A','#9B59C7','#C99A1A','#D44C8C','#3E98B3','#7A8B2E'];
-const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],resps:[],respLinks:[],respPers:[],eventId:new URLSearchParams(location.search).get('event')||null,day:'',poste:'',full:false,me:{prenom:'',nom:'',tel:'',email:''},loaded:false};
+const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],resps:[],respLinks:[],respPers:[],eventId:new URLSearchParams(location.search).get('event')||null,respId:new URLSearchParams(location.search).get('responsable')||null,day:'',poste:'',full:false,me:{prenom:'',nom:'',tel:'',email:''},loaded:false};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
@@ -104,11 +105,10 @@ function meBen(){const p=norm(S.me.prenom),n=norm(S.me.nom),m=norm(maskNom(S.me.
 function myShifts(){const b=meBen();if(!b)return [];return S.affs.filter(a=>a.benevoleId===b.id&&a.statut!=='absent').map(a=>S.creneaux.find(c=>c.id===a.creneauId)).filter(c=>c&&c.eventId===S.eventId).sort((x,y)=>span(x)[0]-span(y)[0])}
 const groupBy=(arr,key)=>arr.reduce((m,x)=>{const k=key(x);if(!m.has(k))m.set(k,[]);m.get(k).push(x);return m},new Map());
 const creneaux=()=>S.creneaux.filter(c=>c.eventId===S.eventId).sort((a,b)=>span(a)[0]-span(b)[0]);
-/* postes de responsable où il reste de la place (besoin, comme un créneau ; voir index.php) */
+/* postes de responsable (inscription.php?event=…&responsable=<id>) : page à part, avec le même formulaire d'identité */
 const persOf=rid=>S.respPers.filter(x=>x.responsableId===rid);
 const rLeft=r=>Math.max(0,(+r.besoin||1)-persOf(r.id).length);
 const rTitle=r=>String(r.titre||'').trim()||t('Responsable');
-const openResps=()=>S.resps.filter(r=>r.eventId===S.eventId&&rLeft(r)>0).sort((a,b)=>rTitle(a).localeCompare(rTitle(b),'fr'));
 const crensOfResp=rid=>S.respLinks.filter(x=>x.responsableId===rid).map(x=>S.creneaux.find(c=>c.id===x.creneauId)).filter(Boolean).sort((a,b)=>span(a)[0]-span(b)[0]);
 const ficheUrl=r=>/^https?:\/\//.test(r.ficheUrl||'')?r.ficheUrl:'';
 const placesLibres=l=>tn(l,'{n} place libre','{n} places libres');
@@ -144,7 +144,7 @@ function renderHeader(){
   const img=$('#evImg');const iu=evImgUrl(e);img.hidden=!iu;if(iu&&img.getAttribute('src')!==iu)img.src=iu;
   $('#evMeta').textContent=e?evWhen(e):t('Choisissez un événement');
   navLinks(e);
-  document.title=(e?e.nom+' · ':'')+t('Inscription bénévoles');
+  document.title=(e?e.nom+' · ':'')+(S.respId?t('Devenir responsable'):t('Inscription bénévoles'));
 }
 /* sans ?event= (ou événement inconnu) : liste des événements ouverts aux inscriptions */
 function rList(){
@@ -164,6 +164,16 @@ function render(){
   const e=ev();
   renderHeader();
   if(!e){m.innerHTML=rList();return}
+  const ident=`<section class="sec"><h2>${t('Vous êtes')}</h2><form class="panel ident" id="meFrm" autocomplete="on">
+    <div class="field"><label for="prenom">${t('Prénom')} *</label><input id="prenom" name="prenom" autocomplete="given-name" maxlength="60" value="${esc(S.me.prenom)}" required></div>
+    <div class="field"><label for="nom">${t('Nom')} *</label><input id="nom" name="nom" autocomplete="family-name" maxlength="60" value="${esc(S.me.nom)}" required></div>
+    <div class="field"><label for="tel">${t('Téléphone')} *</label><input id="tel" name="tel" type="tel" autocomplete="tel" maxlength="25" value="${esc(S.me.tel)}" placeholder="06 12 34 56 78" required></div>
+    <div class="field"><label for="email">${t('E-mail')} *</label><input id="email" name="email" type="email" autocomplete="email" maxlength="120" value="${esc(S.me.email)}" placeholder="${t('prenom@exemple.bzh')}" required></div>
+    <div class="field" style="grid-column:1/-1"><label for="remarques" class="ident-q">${t('Avez-vous des remarques ou suggestions à nous transmettre ?')}</label><textarea id="remarques" name="remarques" maxlength="1000" rows="3">${esc(S.me.remarques||'')}</textarea></div>
+    <input name="website" id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+    <span class="muted" style="grid-column:1/-1;font-size:12.5px">${t('Sur le planning public, seuls votre prénom, l’initiale de votre nom, les 2 premiers caractères de votre e-mail et les 2 premiers et les 2 derniers chiffres de votre téléphone apparaissent (ex. « Marie D. ******* · ✉ ma****@**** · ☎ 06******78 »). Le reste n’est visible que par les organisateurs.')} ${t('Téléphone et e-mail sont obligatoires : ils servent à vous prévenir d’un changement.')}</span>
+  </form></section>`;
+  if(S.respId){m.innerHTML=rRespPage(e,ident);return}
 
   const b=meBen();const mine=myShifts();
   const cs=creneaux();
@@ -178,15 +188,6 @@ function render(){
     <p style="margin:0"><b>${t('Pour des raisons d’organisation, veuillez nous contacter si vous souhaitez changer de créneau ou êtes contraint·e de vous désister, en utilisant le bouton rouge.')}</b></p>
     <p class="muted num" style="margin:0">${tn(open.length,'{n} créneau à pourvoir','{n} créneaux à pourvoir')} · ${placesLibres(open.reduce((s,c)=>s+left(c),0))}${e.contact?` · ${t('Contact')} : <b style="user-select:all">${esc(e.contact)}</b>`:''}</p></section>`;
 
-  const ident=`<section class="sec"><h2>${t('Vous êtes')}</h2><form class="panel ident" id="meFrm" autocomplete="on">
-    <div class="field"><label for="prenom">${t('Prénom')} *</label><input id="prenom" name="prenom" autocomplete="given-name" maxlength="60" value="${esc(S.me.prenom)}" required></div>
-    <div class="field"><label for="nom">${t('Nom')} *</label><input id="nom" name="nom" autocomplete="family-name" maxlength="60" value="${esc(S.me.nom)}" required></div>
-    <div class="field"><label for="tel">${t('Téléphone')} *</label><input id="tel" name="tel" type="tel" autocomplete="tel" maxlength="25" value="${esc(S.me.tel)}" placeholder="06 12 34 56 78" required></div>
-    <div class="field"><label for="email">${t('E-mail')} *</label><input id="email" name="email" type="email" autocomplete="email" maxlength="120" value="${esc(S.me.email)}" placeholder="${t('prenom@exemple.bzh')}" required></div>
-    <div class="field" style="grid-column:1/-1"><label for="remarques" class="ident-q">${t('Avez-vous des remarques ou suggestions à nous transmettre ?')}</label><textarea id="remarques" name="remarques" maxlength="1000" rows="3">${esc(S.me.remarques||'')}</textarea></div>
-    <input name="website" id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
-    <span class="muted" style="grid-column:1/-1;font-size:12.5px">${t('Sur le planning public, seuls votre prénom, l’initiale de votre nom, les 2 premiers caractères de votre e-mail et les 2 premiers et les 2 derniers chiffres de votre téléphone apparaissent (ex. « Marie D. ******* · ✉ ma****@**** · ☎ 06******78 »). Le reste n’est visible que par les organisateurs.')} ${t('Téléphone et e-mail sont obligatoires : ils servent à vous prévenir d’un changement.')}</span>
-  </form></section>`;
 
   const mineHtml=b?`<section class="sec mine"><div class="sec-h"><h2>${t('Mes créneaux')} <span class="muted num" style="font-size:16px">(${mine.length})</span></h2>${mine.length?`<button class="btn sm" type="button" data-act="copy">${t('Copier')}</button>`:''}</div>
     <div class="panel list">${mine.length?mine.map(c=>{const p=poste(c.posteId);return `<div class="row"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${plink('creneau',c.id,esc(p?p.nom:''))}</span></div>`}).join(''):`<div class="empty" style="padding:14px">${t('Aucun créneau pour l’instant.')}</div>`}</div>
@@ -211,16 +212,27 @@ function render(){
   });
   if(!shown.length)list=`<div class="panel empty">${cs.length?t('Aucun créneau libre avec ces filtres.'):t('Aucun créneau pour l’instant.')}</div>`;
 
-  /* responsables recherchés : on s'y propose avec la même identité que pour un créneau */
-  const myResps=b?S.resps.filter(r=>r.eventId===S.eventId&&persOf(r.id).some(x=>x.benevoleId===b.id)):[];
-  const mineResp=myResps.length?`<div class="notice" style="background:var(--ok-bg);border-color:var(--ok)">${t('Vous êtes responsable de {n} créneau(x) sur cet événement.',{n:myResps.reduce((n,r)=>n+crensOfResp(r.id).length,0)})} ${myResps.map(r=>plink('responsable',r.id,t('Voir'))).join(' · ')}</div>`:'';
-  const ors=openResps().filter(r=>!myResps.includes(r));
-  const resps=ors.length?`<section class="sec"><h2>${t('Responsables recherchés')}</h2><p class="muted" style="margin:0">${t('Vous préférez encadrer une équipe ? Proposez-vous comme responsable de ces créneaux.')}</p><div class="postes">${ors.map(r=>{const cs=crensOfResp(r.id);const fu=ficheUrl(r);
-    return `<article class="panel" id="r-${esc(r.id)}"><div class="pc-h"><div><h3>${plink('responsable',r.id,esc(rTitle(r)))}</h3><div class="muted" style="font-size:13px;margin-top:3px"><span class="pill ${persOf(r.id).length?'warn':'crit'} num">${placesLibres(rLeft(r))}</span> ${tn(cs.length,'{n} créneau','{n} créneaux')}</div></div><button class="btn pri" type="button" data-act="signup-resp" data-id="${esc(r.id)}">${t('Je me propose')}</button></div>
-      ${r.description?`<div class="pc-d" style="white-space:pre-line">${esc(r.description)}</div>`:''}${fu?`<div class="pc-d"><a class="btn sm" href="${esc(fu)}" target="_blank" rel="noopener">${t('Fiche de poste')} ↗</a></div>`:''}
-      ${cs.length?`<div class="pc-c list">${cs.map(c=>{const p=poste(c.posteId);return `<div class="row" style="grid-template-columns:auto 1fr"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(p?p.nom:'')}</span></div>`}).join('')}</div>`:''}</article>`}).join('')}</div></section>`:'';
+  m.innerHTML=`${intro}${ident}${mineHtml}<section class="sec"><h2>${t('Créneaux')}</h2>${chips}${filters}<div>${list}</div></section>`;
+}
 
-  m.innerHTML=`${intro}${ident}${mineResp}${mineHtml}${resps}<section class="sec"><h2>${t('Créneaux')}</h2>${chips}${filters}<div>${list}</div></section>`;
+/* page d'un poste de responsable : le poste, le formulaire d'identité, puis un seul bouton */
+function rRespPage(e,ident){
+  const r=S.resps.find(x=>x.id===S.respId&&x.eventId===S.eventId);
+  const back=`<p style="margin:0"><a href="inscription.php?event=${encodeURIComponent(e.id)}">${t('Plutôt bénévole sur un créneau ? Voir les créneaux libres')}</a></p>`;
+  if(!r)return `<div class="notice">${t('Ce poste de responsable n’existe plus.')}</div>${back}`;
+  const cs=crensOfResp(r.id);const fu=ficheUrl(r);const l=rLeft(r);const b=meBen();
+  const mine=b&&persOf(r.id).some(x=>x.benevoleId===b.id);
+  const info=`<section class="panel" style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+    <h2>${t('Devenir responsable')}</h2>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0">${plink('responsable',r.id,esc(rTitle(r)))}</h3><span class="pill ${l?'warn':'ok'} num">${l?placesLibres(l):t('complet')}</span></div>
+    ${r.description?`<p style="margin:0;white-space:pre-line">${esc(r.description)}</p>`:''}
+    ${fu?`<p style="margin:0"><a class="btn sm" href="${esc(fu)}" target="_blank" rel="noopener">${t('Fiche de poste')} ↗</a></p>`:''}
+    ${cs.length?`<div><div class="muted" style="font-size:12.5px;margin-bottom:2px">${tn(cs.length,'Créneau encadré','Créneaux encadrés')}</div><div class="list">${cs.map(c=>{const p=poste(c.posteId);return `<div class="row" style="grid-template-columns:auto 1fr;padding:6px 0"><div class="when"><b>${esc(shortDay(c.jour))}</b><span class="mono muted">${esc(hours(c))}</span></div><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(p?p.nom:'')}</span></div>`}).join('')}</div></div>`:''}
+    <p style="margin:0"><b>${t('Pour des raisons d’organisation, veuillez nous contacter si vous souhaitez changer de créneau ou êtes contraint·e de vous désister, en utilisant le bouton rouge.')}</b></p></section>`;
+  const act=mine?`<div class="notice" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ink)">${t('Vous êtes inscrit·e comme responsable sur ce poste. Merci !')}</div>`
+    :!l?`<div class="notice">${t('Ce poste de responsable est déjà pourvu.')}${e.contact?' '+t('Contact')+` : <b>${esc(e.contact)}</b>`:''}</div>`
+    :`<div class="actions" style="justify-content:flex-start"><button class="btn pri" type="button" data-act="signup-resp" data-id="${esc(r.id)}">${t('Je me propose comme responsable')}</button></div>`;
+  return `${info}${ident}${act}${back}`;
 }
 
 /* ---------- actions ---------- */
@@ -235,7 +247,7 @@ document.addEventListener('click',async e=>{
   else if(act==='copy'){const ev0=ev();const txt=`${S.me.prenom.trim()} ${S.me.nom.trim()} – ${ev0?ev0.nom:''}\n`+myShifts().map(c=>{const p=poste(c.posteId);return `• ${shortDay(c.jour)} ${hours(c)} : ${p?p.nom:''}`}).join('\n');
     try{await navigator.clipboard.writeText(txt);toast(t('Planning copié.'))}catch(err){toast(t('Copie impossible sur cet appareil.'))}}
   else if(act==='signup'||act==='signup-resp'){
-    const isResp=act==='signup-resp';const lab=isResp?t('Je me propose'):t('Je m’inscris');
+    const isResp=act==='signup-resp';const lab=isResp?t('Je me propose comme responsable'):t('Je m’inscris');
     readMe();
     const prenom=S.me.prenom.trim(),nom=S.me.nom.trim(),tel=S.me.tel.trim(),email=S.me.email.trim();
     const miss=ME_FIELDS.find(k=>!S.me[k].trim());
@@ -272,10 +284,11 @@ async function boot(){
   if(CFG.setupError){render();return}
   try{await load()}catch(e){toast((e&&e.message)||t('Chargement impossible.'))}
   const h=decodeURIComponent(location.hash.slice(1));
+  if(h.startsWith('r-')&&!S.respId)S.respId=h.slice(2); /* anciens liens inscription.php#r-<id> */
   const target=h.startsWith('c-')&&S.creneaux.find(c=>c.id===h.slice(2));
   if(target){S.day=target.jour;if(!left(target))S.full=true}
   render();
-  if(target||h.startsWith('r-')){const el=document.getElementById(h);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid var(--accent)'}}
+  if(target){const el=document.getElementById(h);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid var(--accent)'}}
   setInterval(async()=>{
     if(document.hidden)return;const a=document.activeElement;if(a&&ME_FIELDS.includes(a.id))return;
     try{await load();keepFocus(render)}catch(e){}

@@ -17,6 +17,12 @@ document.documentElement.lang=lang;
 
 const BR={
 /* responsables */
+"Menu":"Lañser",
+"Devenir responsable":"Dont da vezañ karget",
+"Je me propose comme responsable":"En em ginnig a ran da vezañ karget",
+"Créneau encadré":"Prantad meret",
+"Vous êtes inscrit·e comme responsable sur ce poste. Merci !":"Enskrivet oc’h evel karget war ar post-mañ. Trugarez !",
+"Plutôt bénévole sur un créneau ? Voir les créneaux libres":"Gwell eo ganeoc’h bezañ skoazeller war ur prantad ? Gwelet ar prantadoù dieub",
 "Responsables (un par ligne : nom, téléphone, e-mail)":"Kargidi (unan dre linenn : anv, pellgomz, postel)",
 "Prénom Nom, 06 12 34 56 78, prenom@exemple.bzh":"Anv-bihan Anv-familh, 06 12 34 56 78, anv@skouer.bzh",
 "Le téléphone et l’e-mail sont masqués au public, comme ceux des bénévoles.":"Kuzhet eo ar pellgomz hag ar postel d’an holl, evel re ar skoazellerien.",
@@ -31,11 +37,7 @@ const BR={
 "Tant qu’il reste de la place, le poste est proposé au public : chacun peut s’y inscrire sur la page d’inscription, comme sur un créneau.":"E-keit ma chom plas e vez kinniget ar post d’an holl : pep hini a c’hall en em enskrivañ war ar bajenn enskrivañ, evel war ur prantad.",
 "Vous êtes déjà inscrit·e sur ce poste de responsable.":"Enskrivet oc’h dija war ar post karget-se.",
 "Nom de responsable invalide (80 caractères max).":"Anv karget direizh (80 arouezenn d’ar muiañ).",
-"Responsables recherchés":"Kargidi klasket",
 "Je me propose":"En em ginnig a ran",
-"Vous préférez encadrer une équipe ? Proposez-vous comme responsable de ces créneaux.":"Gwell eo ganeoc’h merañ ur skipailh ? En em ginnigit da gaout karg eus ar prantadoù-mañ.",
-"Vous êtes responsable de {n} créneau(x) sur cet événement.":"Karget oc’h eus {n} prantad en darvoud-mañ.",
-"Voir":"Gwelet",
 "Merci {p} ! Vous êtes responsable de {n} créneau(x).":"Trugarez {p} ! Karget oc’h eus {n} prantad.",
 "Ce poste de responsable n’existe plus.":"N’eus ket eus ar post karget-se ken.",
 "Ce poste de responsable est déjà pourvu.":"Pourvezet eo dija ar post karget-se.",
@@ -405,6 +407,12 @@ const BR={
 /* English: same French keys. Keep it in sync with BR. */
 const EN={
 /* responsables */
+"Menu":"Menu",
+"Devenir responsable":"Become a lead",
+"Je me propose comme responsable":"Sign me up as lead",
+"Créneau encadré":"Shift led",
+"Vous êtes inscrit·e comme responsable sur ce poste. Merci !":"You are signed up as lead for this role. Thank you!",
+"Plutôt bénévole sur un créneau ? Voir les créneaux libres":"Rather volunteer on a shift? See the open shifts",
 "Responsables (un par ligne : nom, téléphone, e-mail)":"Leads (one per line: name, phone, e-mail)",
 "Prénom Nom, 06 12 34 56 78, prenom@exemple.bzh":"First Last, 06 12 34 56 78, first@example.com",
 "Le téléphone et l’e-mail sont masqués au public, comme ceux des bénévoles.":"Phone and e-mail are hidden from the public, as for volunteers.",
@@ -419,11 +427,7 @@ const EN={
 "Tant qu’il reste de la place, le poste est proposé au public : chacun peut s’y inscrire sur la page d’inscription, comme sur un créneau.":"While places remain, the role is open to the public: anyone can sign up for it on the sign-up page, just like a shift.",
 "Vous êtes déjà inscrit·e sur ce poste de responsable.":"You are already signed up for this lead role.",
 "Nom de responsable invalide (80 caractères max).":"Invalid lead name (80 characters max).",
-"Responsables recherchés":"Leads wanted",
 "Je me propose":"I’ll do it",
-"Vous préférez encadrer une équipe ? Proposez-vous comme responsable de ces créneaux.":"Would you rather lead a team? Volunteer as the lead for these shifts.",
-"Vous êtes responsable de {n} créneau(x) sur cet événement.":"You are the lead for {n} shift(s) at this event.",
-"Voir":"View",
 "Merci {p} ! Vous êtes responsable de {n} créneau(x).":"Thank you {p}! You are now the lead for {n} shift(s).",
 "Ce poste de responsable n’existe plus.":"This lead role no longer exists.",
 "Ce poste de responsable est déjà pourvu.":"This lead role has already been taken.",

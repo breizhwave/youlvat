@@ -21,6 +21,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="assets/app.css?v=<?= filemtime(__DIR__ . '/assets/app.css') ?>">
 <script src="assets/i18n.js?v=<?= filemtime(__DIR__ . '/assets/i18n.js') ?>"></script>
+<script src="assets/nav.js?v=<?= filemtime(__DIR__ . '/assets/nav.js') ?>"></script>
 <script src="assets/rte.js?v=<?= filemtime(__DIR__ . '/assets/rte.js') ?>"></script>
 </head>
 <body<?= is_admin() ? '' : ' class="ro"' ?>>
@@ -45,7 +46,7 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
     <div class="evpick">
       <div class="evpick-col">
-        <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
+        <div class="langrow"><div class="langsw" role="group" aria-label="Yezh / Langue"></div><button class="burger" id="burger" type="button" aria-expanded="false" title="Menu" data-i18n-title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
         <button class="btn band-btn sm" id="login" type="button" hidden data-i18n="Organisateurs">Organisateurs</button>
         <button class="btn band-btn sm" id="logout" type="button" hidden data-i18n="Déconnexion">Déconnexion</button>
       </div>
@@ -166,7 +167,7 @@ const ben=id=>S.benevoles.find(b=>b.id===id);
 const poste=id=>S.postes.find(p=>p.id===id);
 const resp=id=>S.resps.find(r=>r.id===id);
 /* postes de responsable : intitulé + personnes (nom saisi par les organisateurs, public en entier, ou bénévole inscrit,
-   nom masqué pour le public) ; tant qu'il reste de la place (besoin), on peut s'y inscrire sur inscription.php#r-<id> */
+   nom masqué pour le public) ; tant qu'il reste de la place (besoin), on peut s'y inscrire sur inscription.php?event=…&responsable=<id> */
 const persOf=rid=>S.respPers.filter(x=>x.responsableId===rid).sort((a,b)=>String(a.createdAt).localeCompare(b.createdAt));
 const persName=x=>x.benevoleId?bName(ben(x.benevoleId)):x.nom||'';
 const persHtml=x=>x.benevoleId?plink('benevole',x.benevoleId,esc(persName(x))):esc(x.nom);
@@ -180,7 +181,7 @@ function lineToPers(l){const o={nom:[],tel:'',email:''};
   return {nom:o.nom.join(', ').replace(/\s+/g,' '),tel:o.tel,email:o.email}}
 const rTitle=r=>String(r.titre||'').trim()||t('Responsable');
 const rLeft=r=>Math.max(0,(+r.besoin||1)-persOf(r.id).length);
-const respSignupUrl=rid=>'inscription.php?event='+encodeURIComponent(S.eventId||'')+'#r-'+encodeURIComponent(rid);
+const respSignupUrl=rid=>'inscription.php?event='+encodeURIComponent(S.eventId||'')+'&responsable='+encodeURIComponent(rid);
 const rCmp=(a,b)=>rTitle(a).localeCompare(rTitle(b),'fr')||String(a.createdAt).localeCompare(b.createdAt);
 const RS=()=>S.resps.filter(r=>r.eventId===S.eventId).sort(rCmp);
 const respsOf=cid=>S.respLinks.filter(x=>x.creneauId===cid).map(x=>resp(x.responsableId)).filter(Boolean).sort(rCmp);
@@ -243,7 +244,7 @@ function renderHeader(){
   $('#signupLink').href=signupUrl();
   $('#contactTab').href=$('#changeLink').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');
   $('#evMeta').textContent=e?evWhen(e):(db?t('Choisissez un événement'):'');
-  document.querySelector('.tabrow').hidden=!e;
+  document.querySelector('.tabrow').hidden=$('#burger').hidden=!e; /* pas d'onglets ni de menu sans événement */
   document.title=(e?e.nom+' · ':'')+t('Régie Bénévoles');
   document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.tab===S.tab)));
 }
@@ -365,7 +366,7 @@ function rPlan(){
       const H=Math.max(1,lanes.length)*52+8;
       const blks=pos.map(({c,l,s})=>{const n=actifs(c.id).length,bd=+c.besoin||0;const st=fillState(c);const x=(s[0]-d0)/60-h0;const wd=(s[1]-s[0])/60*PX-4;
         return `<button type="button" class="blk ${st}" data-act="cren" data-id="${esc(c.id)}" style="left:${x*PX+2}px;top:${l*52+6}px;width:${wd}px" title="${esc(p.nom+' · '+hours(c)+' · '+n+'/'+bd)}"><span class="t">${esc(hours(c))}</span><span class="f num">${n}/${bd}</span><span class="p"><i style="width:${bd?Math.min(100,n/bd*100):100}%;background:${st==='full'?'var(--ok)':st==='part'?'var(--warn)':'var(--crit)'}"></i></span></button>`}).join('');
-      return `<div class="tl-row"><div class="tl-lab"><span class="dot" style="background:${pColor(p)};margin-top:4px"></span><span>${plink('poste',p.id,esc(p.nom))}</span></div><div class="tl-track" style="width:${W}px;min-height:${H}px">${ticks}${blks}</div></div>`}).join('');
+      return `<div class="tl-row"><div class="tl-lab"><span class="dot" style="background:${pColor(p)};margin-top:4px"></span><span>${plink('poste',p.id,esc(p.nom))}${posteResps(p,cs)}</span></div><div class="tl-track" style="width:${W}px;min-height:${H}px">${ticks}${blks}</div></div>`}).join('');
     body=`<div class="tl-scroll"><div class="tl" style="width:${150+W}px"><div class="tl-ruler"><div class="tl-lab">${t('Poste')}</div><div class="tl-track" style="width:${W}px;height:32px">${labs}</div></div>${rows}</div></div>
     <div class="legend"><span><span class="pill ok">${t('complet')}</span></span><span><span class="pill warn">${t('partiel')}</span></span><span><span class="pill crit">${t('vide')}</span></span><span>${t('Un créneau qui commence avant 6h compte dans la nuit du jour affiché (ex. 00h–05h le 31/12 = nuit du 31 au 1er).')}</span></div>`;
   }
@@ -404,14 +405,12 @@ function rCrenSearch(){
     /* « 22:00 » → « 22h », « 19:45 » → « 19h45 » (format de hours()) */
     const words=fold(q).split(/\s+/).filter(Boolean).map(w=>w.replace(/^(\d{1,2}):(\d{2})$/,(m,h,mn)=>h.padStart(2,'0')+'h'+(mn==='00'?'':mn)));
     const found=C().filter(c=>{const p=poste(c.posteId);const n=fold([p&&p.nom,p&&p.responsable,...respsOf(c.id).flatMap(r=>[rTitle(r),...persOf(r.id).map(persName)]),shortDay(c.jour),fmtDay(c.jour),hours(c)].join(' '));return words.every(w=>n.includes(w))});
-    /* tous les résultats, regroupés par jour (comme « Retrouver une inscription » par bénévole), puis par poste et par heure */
+    /* tous les résultats, regroupés par jour, puis dans l'ordre de l'heure de début (nuit après la soirée, voir span()) */
     const days=[...new Set(found.map(c=>c.jour))];
-    res=found.length?days.map(j=>{const cs=found.filter(c=>c.jour===j).sort((a,b)=>posteNom(poste(a.posteId)).localeCompare(posteNom(poste(b.posteId)),'fr')||span(a)[0]-span(b)[0]);
+    res=found.length?days.map(j=>{const cs=found.filter(c=>c.jour===j).sort((a,b)=>span(a)[0]-span(b)[0]||posteNom(poste(a.posteId)).localeCompare(posteNom(poste(b.posteId)),'fr'));
       return `<div class="ps-ben"><div class="ps-h"><b>${esc(fmtDay(j))}</b><span class="muted num">${tn(cs.length,'{n} créneau','{n} créneaux')}</span></div>
-        <div class="cs-cols">${[...new Set(cs.map(c=>c.posteId))].map(pid=>{const p=poste(pid);
-          /* sous-titre du poste, puis une ligne par créneau, en retrait */
-          return `<div class="cs-p"><div class="pname cs-pt"><span class="dot" style="background:${pColor(p)}"></span>${p?plink('poste',p.id,esc(posteNom(p))):esc(posteNom(p))}</div>${cs.filter(c=>c.posteId===pid).map(c=>{const n=actifs(c.id).length,b=+c.besoin||0,st=fillState(c);
-            return `<div class="cs-row click" data-act="cren" data-id="${esc(c.id)}"><span class="mono">${esc(hours(c))}</span><span class="pill ${st==='full'?'ok':st==='part'?'warn':'crit'} num">${n}/${b}</span></div>`}).join('')}</div>`}).join('')}</div></div>`}).join('')
+        <div class="cs-cols">${cs.map(c=>{const p=poste(c.posteId);const n=actifs(c.id).length,b=+c.besoin||0,st=fillState(c);
+          return `<div class="cs-row click" data-act="cren" data-id="${esc(c.id)}"><span class="mono">${esc(hours(c))}</span><span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${esc(posteNom(p))}</span><span class="pill ${st==='full'?'ok':st==='part'?'warn':'crit'} num">${n}/${b}</span></div>`}).join('')}</div></div>`}).join('')
       :`<div class="muted ps-msg">${t('Aucun créneau trouvé.')}</div>`;
   }
   return {title:t('Retrouver un créneau'),head:`<label for="cq" class="ps-l">${t('Retrouver un créneau')}</label><input id="cq" class="search" type="search" autocomplete="off" value="${esc(S.cq)}" placeholder="${t('Poste, jour ou heure')}">`,res};
@@ -433,6 +432,16 @@ async function lookup(q){
   catch(e){S.pres={q,ids:[]};toast((e&&e.message)||t('Recherche impossible.'))}
   if(S.pq.trim()===q){render.focusQ=document.activeElement&&document.activeElement.id;render();render.focusQ=false}
 }
+/* sous le nom du poste (planning) : les personnes des postes de responsable liés à ses créneaux du jour, en gris clair,
+   chaque groupe de noms lié à la carte de son poste de responsable ; sans poste de responsable, l'ancien champ postes.responsable, sinon rien */
+function posteResps(p,cs){
+  const rs=[...new Set(cs.filter(c=>c.posteId===p.id).flatMap(c=>respsOf(c.id)))];
+  if(!rs.length&&!p.responsable)return ''; /* aucun responsable prévu pour ce poste : rien */
+  const n=rs.reduce((k,r)=>k+persOf(r.id).length,0);
+  const who=rs.length?rs.map(r=>{const ps=persOf(r.id);return plink('responsable',r.id,ps.length?ps.map(x=>esc(persName(x))).join(', '):t('Personne pour l’instant.'))}).join(' · ')
+    :esc(p.responsable);
+  return `<div class="p-resp">${tn(Math.max(n,1),'Responsable','Responsables')} : ${who}</div>`;
+}
 /* vue liste : comme la page d'inscription, regroupée par poste (dans l'ordre de leur premier créneau) */
 function rPlanList(cs){
   const groups=cs.reduce((m,c)=>{if(!m.has(c.posteId))m.set(c.posteId,[]);m.get(c.posteId).push(c);return m},new Map());
@@ -442,7 +451,7 @@ function rPlanList(cs){
       const act=S.ro&&n<b?`<a class="btn pri sm" href="${esc(signupUrl(c.id))}">${t('S’inscrire')}</a>`:'<span></span>';
       return `<div class="slot click" data-act="cren" data-id="${esc(c.id)}"><div class="meta"><span class="t">${esc(hours(c))}</span><span class="muted num">${fmtH(dur(c))}</span><span class="pill ${st==='full'?'ok':st==='part'?'warn':'crit'} num">${n}/${b}</span></div>${act}
         ${as.length?`<div class="who-l">${as.map(a=>esc(bName(ben(a.benevoleId)))).join(', ')}</div>`:''}${c.note?`<div class="note">${esc(c.note)}</div>`:''}</div>`}).join('');
-    html+=`<div class="panel pgroup"><div class="pg-h"><span class="dot" style="background:${pColor(p)}"></span><span class="pg-t">${p?plink('poste',p.id,esc(posteNom(p))):esc(posteNom(p))}${p&&p.responsable?` <span class="pg-r">· ${t('Resp.')} ${esc(p.responsable)}</span>`:''}</span></div>${p&&p.description?`<div class="pg-d">${esc(p.description)}</div>`:''}${slots}</div>`});
+    html+=`<div class="panel pgroup"><div class="pg-h"><span class="dot" style="background:${pColor(p)}"></span><span class="pg-t">${p?plink('poste',p.id,esc(posteNom(p)))+posteResps(p,cs):esc(posteNom(p))}</span></div>${p&&p.description?`<div class="pg-d">${esc(p.description)}</div>`:''}${slots}</div>`});
   return `<div class="pgroups">${html}</div><div class="legend"><span>${t('Un créneau qui commence avant 6h compte dans la nuit du jour affiché.')}</span></div>`;
 }
 

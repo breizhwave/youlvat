@@ -261,14 +261,13 @@ body.ro .adm{display:none!important}
 .ps-f{display:flex;flex-direction:column;gap:8px;min-width:0}
 .ps-f .search{width:100%}
 .ps-res{display:flex;flex-direction:column;gap:8px}
-/* « Retrouver un créneau » : jour > poste (sous-titre) > créneaux en retrait */
-.cs-p{display:flex;flex-direction:column;break-inside:avoid}
-/* postes d'un même jour en colonnes (2 ou 3 sur ordinateur, 1 sur téléphone), lus de haut en bas */
-.cs-cols{columns:300px 3;column-gap:28px}
-.cs-pt{font-weight:600;padding:6px 0 2px}
-.cs-row{display:flex;align-items:center;gap:12px;padding:5px 8px 5px 22px;border-radius:var(--r);cursor:pointer}
+/* « Retrouver un créneau » : jour, puis une ligne par créneau dans l'ordre de l'heure de début (heure, poste, remplissage) */
+/* créneaux d'un même jour en colonnes (2 ou 3 sur ordinateur, 1 sur téléphone), lus de haut en bas */
+.cs-cols{columns:340px 3;column-gap:28px}
+.cs-row{display:flex;align-items:center;gap:12px;padding:5px 8px;border-radius:var(--r);cursor:pointer;break-inside:avoid}
 .cs-row:hover{background:var(--surface2)}
-.cs-row .mono{min-width:9em} /* pastilles alignées malgré « 19h45 – 22h » / « 22h – 00h » */
+.cs-row .mono{min-width:9em;flex:none} /* postes alignés malgré « 19h45 – 22h » / « 22h – 00h » */
+.cs-row .pname{flex:1;min-width:0}
 .ps-rt{font-weight:600;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
 .psearches.half{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
 .psearches.half .psearch .search{width:100%}
@@ -355,3 +354,17 @@ a.plink:hover .plink-i{opacity:.9}
 .pers-l{display:flex;flex-direction:column;gap:4px}
 .pers{display:flex;flex-direction:column;gap:1px;color:var(--ink);font-weight:500}
 .pers .mono{font-weight:400}
+/* planning : responsables sous le nom du poste, en gris clair */
+.p-resp{font-size:12px;font-weight:400;color:#9A9DA6;line-height:1.35;margin-top:2px}
+.p-resp a.plink{color:inherit}
+/* menu des pages sur téléphone : bouton jaune à côté des langues (assets/nav.js), onglets en liste quand il est ouvert */
+.langrow{display:flex;align-items:center;gap:6px}
+.burger{display:none;align-items:center;justify-content:center;width:36px;height:30px;padding:0;border:0;border-radius:4px;background:var(--accent);color:var(--accent-ink);cursor:pointer;flex:none}
+.burger svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+@media (max-width:560px){
+  .burger{display:inline-flex}
+  .tabrow .tabs{display:none}
+  .tabrow.open .tabs{display:flex;flex-direction:column;flex:0 0 100%;order:1;gap:0;padding-bottom:8px}
+  .tabrow.open .tab{text-align:left;border-bottom:0;border-left:3px solid transparent;padding:9px 12px}
+  .tabrow.open .tab[aria-selected="true"]{border-left-color:var(--accent)}
+}

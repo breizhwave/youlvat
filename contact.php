@@ -18,6 +18,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="assets/app.css?v=<?= filemtime(__DIR__ . '/assets/app.css') ?>">
 <script src="assets/i18n.js?v=<?= filemtime(__DIR__ . '/assets/i18n.js') ?>"></script>
+<script src="assets/nav.js?v=<?= filemtime(__DIR__ . '/assets/nav.js') ?>"></script>
 <script src="assets/rte.js?v=<?= filemtime(__DIR__ . '/assets/rte.js') ?>"></script>
 </head>
 <body<?= is_admin() ? '' : ' class="ro"' ?>>
@@ -38,7 +39,7 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </div>
     <div class="evpick">
-      <div class="langsw" role="group" aria-label="Yezh / Langue"></div>
+      <div class="langrow"><div class="langsw" role="group" aria-label="Yezh / Langue"></div><button class="burger" id="burger" type="button" aria-expanded="false" title="Menu" data-i18n-title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
     </div>
   </div>
   <div class="wrap tabrow">
