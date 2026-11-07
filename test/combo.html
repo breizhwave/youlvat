@@ -1,0 +1,125 @@
+<!doctype html>
+<!--
+  Tests de assets/combo.js (liste à choix avec recherche), dans le navigateur.
+  Ouvrir via un serveur local, ex. : php -S localhost:8001 puis http://localhost:8001/test/combo.html
+  Résultat affiché dans la page et dans window.__results ({pass, fail, failures}).
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Tests combo.js</title>
+<link rel="stylesheet" href="../assets/app.css">
+<style>body{padding:20px;font-family:system-ui}#out li.ko{color:#C23A2F}#out li.ok{color:#1E8757}.field{max-width:420px;margin:12px 0}</style>
+</head>
+<body>
+<h1>Tests combo.js</h1>
+<div class="field"><label for="s1">Bénévole</label>
+  <div style="display:flex;gap:8px"><div style="flex:1"><select id="s1" data-combo data-combo-go="#go">
+    <option value="">Choisir…</option>
+    <option value="a" data-s="eric@example.org 06 11 22 33 44">ERIC LE SCOUL · 0 h</option>
+    <option value="b" data-s="sophie@example.org">Sophie Paliern · 0 h</option>
+    <option value="c" disabled data-s="alain@gmail.com 06 71 22 36 92">Alain Sainrat · déjà occupé</option>
+    <option value="d" data-s="marie.the@gmail.com 06 71 22 36 93">Marie-Thé Sainrat · 2 h</option>
+    <option value="e" data-s="celine@hotmail.fr">Céline Courvoisier · 4 h</option>
+  </select></div><button id="go" type="button">Affecter</button></div>
+</div>
+<form id="f" class="field"><label for="s2">Ajouter</label>
+  <select id="s2" name="addBen" data-combo><option value="">+ Ajouter un bénévole…</option><option value="x">Yann Kergoat</option><option value="y">Yannick Le Bihan</option></select>
+  <button type="submit">Enregistrer</button>
+</form>
+<ul id="out"></ul>
+<script src="../assets/combo.js"></script>
+<script>
+(async function(){
+const R={pass:0,fail:0,failures:[]};window.__results=R;
+const out=document.getElementById('out');
+const ok=(c,label,d)=>{const li=document.createElement('li');li.className=c?'ok':'ko';li.textContent=(c?'✓ ':'✗ ')+label+(c||d===undefined?'':' — '+JSON.stringify(d));out.append(li);c?R.pass++:(R.fail++,R.failures.push(label))};
+const eq=(a,b,label)=>ok(JSON.stringify(a)===JSON.stringify(b),label,{attendu:b,obtenu:a});
+const tick=()=>new Promise(r=>setTimeout(r,0));
+/* focus/blur envoyés à la main : un onglet sans le focus de la fenêtre (tests automatisés) ne les déclenche pas */
+const focusEl=el=>{el.focus();el.dispatchEvent(new FocusEvent('focus'))};
+const blurEl=el=>{el.blur();el.dispatchEvent(new FocusEvent('blur'))};
+
+let goClicks=0;document.getElementById('go').addEventListener('click',()=>goClicks++);
+let submits=0;document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();submits++});
+let changes=0;document.getElementById('s1').addEventListener('change',()=>changes++);
+
+Combo.enhance(document);
+Combo.enhance(document); // idempotent
+const sel=document.getElementById('s1'),q=document.getElementById('s1-q'),ul=document.getElementById('s1-q-l');
+ok(!!q&&!!ul,'champ de recherche et liste créés');
+eq(document.querySelectorAll('.combo').length,2,'enhance() deux fois : pas de doublon');
+ok(sel.hidden,'select d\'origine caché (gardé pour la valeur)');
+eq(document.querySelector('label[for="s1-q"]')?.textContent,'Bénévole','le label pointe sur le champ');
+eq(q.getAttribute('role'),'combobox','rôle ARIA combobox');
+ok(q.placeholder.includes('Choisir'),'placeholder repris de la 1re option');
+
+const type=v=>{q.value=v;q.dispatchEvent(new Event('input',{bubbles:true}))};
+const key=(k,el=q)=>{const e=new KeyboardEvent('keydown',{key:k,bubbles:true,cancelable:true});el.dispatchEvent(e);return e};
+const items=()=>[...ul.querySelectorAll('li')].map(l=>l.textContent);
+const cur=()=>ul.querySelector('li.cur')?.textContent;
+
+focusEl(q);await tick();
+ok(!ul.hidden,'focus : la liste s\'ouvre');
+eq(items().length,5,'toutes les options listées (sans l\'option vide)');
+eq(cur(),'ERIC LE SCOUL · 0 h','1er choix possible en surbrillance');
+
+type('celine cour');eq(items(),['Céline Courvoisier · 4 h'],'sans accents, plusieurs mots');
+type('THE sain');eq(items(),['Marie-Thé Sainrat · 2 h'],'casse et accents ignorés');
+type('hotmail');eq(items(),['Céline Courvoisier · 4 h'],'recherche dans data-s (e-mail)');
+type('06 71 22');eq(items().length,2,'téléphone avec espaces');
+type('067122');eq(items().length,2,'téléphone sans espaces');
+type('ma');eq(items()[0],'Marie-Thé Sainrat · 2 h','les noms qui correspondent passent avant les e-mails');
+ok(items().indexOf('Alain Sainrat · déjà occupé')>items().indexOf('Marie-Thé Sainrat · 2 h'),'trouvé par e-mail seulement : après');
+type('zzzz');eq(items(),['Aucun résultat'],'aucun résultat');
+
+type('sainrat');eq(cur(),'Marie-Thé Sainrat · 2 h','option désactivée sautée pour la surbrillance');
+key('ArrowUp');eq(cur(),'Marie-Thé Sainrat · 2 h','↑ ne s\'arrête pas sur une option désactivée');
+type('');key('ArrowDown');eq(cur(),'Sophie Paliern · 0 h','↓ descend');
+key('ArrowDown');eq(cur(),'Marie-Thé Sainrat · 2 h','↓ saute l\'option désactivée');
+ul.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+const dis=[...ul.querySelectorAll('li')].find(l=>l.classList.contains('dis'));
+dis.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+eq(sel.value,'','clic sur une option désactivée : rien n\'est choisi');
+
+const esc=(()=>{let stopped=true;const h=()=>{stopped=false};document.addEventListener('keydown',h);const e=key('Escape');document.removeEventListener('keydown',h);return {stopped,closed:ul.hidden,prevented:e.defaultPrevented}})();
+ok(esc.closed,'Échap ferme la liste');
+ok(esc.stopped,'Échap ne remonte pas (le tiroir reste ouvert)');
+
+type('celine');const e1=key('Enter');
+eq(sel.value,'e','Entrée choisit l\'option en surbrillance');
+eq(q.value,'Céline Courvoisier · 4 h','le champ affiche le choix');
+ok(e1.defaultPrevented,'Entrée ne soumet pas le formulaire en choisissant');
+eq(changes,1,'événement change envoyé sur le select');
+eq(goClicks,1,'data-combo-go : le bouton « Affecter » est cliqué');
+ok(ul.hidden,'la liste se ferme après le choix');
+type('cel');eq(sel.value,'','retaper efface la valeur choisie');
+
+// clic souris
+type('sophie');ul.querySelector('li[data-i="0"]').dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+eq(sel.value,'b','clic choisit');eq(goClicks,2,'clic : bouton cliqué aussi');
+
+// sortie du champ avec un seul résultat possible
+type('marie-t');blurEl(q);await tick();
+eq(sel.value,'d','sortie du champ avec un seul résultat : choisi automatiquement');
+type('sain');blurEl(q);await tick();
+eq(sel.value,'d','plusieurs/aucun résultat valide : pas de choix automatique hasardeux');
+
+// formulaire sans data-combo-go
+const q2=document.getElementById('s2-q'),s2=document.getElementById('s2');
+q2.focus();q2.value='yannick';q2.dispatchEvent(new Event('input',{bubbles:true}));
+q2.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+eq(s2.value,'y','2e liste : Entrée choisit');
+eq(submits,0,'2e liste : pas d\'envoi du formulaire au choix');
+eq(new FormData(document.getElementById('f')).get('addBen'),'y','la valeur part avec le formulaire (select caché)');
+
+// Combo.active()
+q2.focus();ok(Combo.active(),'Combo.active() vrai quand un champ a le focus');
+q2.blur();document.body.focus();ok(!Combo.active(),'Combo.active() faux sinon');
+
+const h=document.createElement('h2');h.textContent=R.fail?`${R.fail} échec(s), ${R.pass} réussi(s)`:`Tout passe : ${R.pass} vérifications`;h.style.color=R.fail?'#C23A2F':'#1E8757';document.body.insertBefore(h,out);
+document.title=(R.fail?'✗ ':'✓ ')+document.title;
+})();
+</script>
+</body>
+</html>

@@ -117,7 +117,8 @@ function migrate(PDO $pdo): void
     }
     // tables ajoutées depuis (responsables…) : le schéma n'utilise que des CREATE … IF NOT EXISTS
     $n = $pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'responsable_creneaux'")->fetchColumn();
-    if (!$n) $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+    $h = $pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'historique'")->fetchColumn();
+    if (!$n || !$h) $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
     // 1res versions de responsables (une seule personne : colonnes nom, puis benevole_id) : table reconstruite sans elles,
     // et chaque personne passe dans responsable_personnes. SQLite ne sait pas retirer une colonne NOT NULL.
     // foreign_keys coupé le temps de l'opération, sinon DROP TABLE effacerait les liens avec les créneaux.

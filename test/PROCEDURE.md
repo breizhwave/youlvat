@@ -1,6 +1,35 @@
+# Tests
+
+## 0. Tests automatiques (à lancer avant chaque dépôt FTP)
+
+```sh
+php test/run.php              # tout (≈ 3 s)
+php test/run.php signup       # seulement les groupes dont le nom contient « signup »
+php test/run.php --keep       # garde le bac à sable pour inspecter la base ensuite
+```
+
+`run.php` crée sa propre copie de l'appli dans le dossier temporaire, avec une **config de test** (mot de passe propre au test, base neuve chargée avec `seed_demo.sql`) et son propre serveur `php -S` sur un port libre. La vraie `config.php` et la vraie base ne sont jamais lues. Code de sortie 0 = tout passe, 1 = échec (liste des échecs à la fin). Il couvre :
+
+- **unitaires** : masquage nom / e-mail / tél, règle de nuit et passage de minuit, nettoyage du texte riche, dates ;
+- **pages** : en-tête et pied de page communs, page d'aide (trois langues, onglet sur toutes les pages), `<title>`, description, Open Graph, événement déduit de `?creneau=` / `?poste=`, échappement HTML, suffixes `?v=` ;
+- **API** : lecture publique (données privées masquées, notes retirées), CSRF, écritures refusées hors connexion, connexion / déconnexion, mode WAL ;
+- **inscription** : champs obligatoires, champ piège, réutilisation de la fiche sans écraser les contacts, remarques nettoyées et sans doublon, chevauchements, règle de nuit, créneau complet, absents, **6 inscriptions simultanées sur 2 places**, limite de 20 par heure ;
+- **recherche** e-mail / téléphone exacte seulement, limite de 30 par heure ;
+- **responsables** : création, inscription publique, poste pourvu, modification en différentiel, masquage ;
+- **historique des retraits** : retrait d'un créneau, suppression d'un créneau, personne retirée d'un poste de responsable, fiche supprimée (copie complète) ; la fiche d'un bénévole sans créneau reste ; jamais envoyé au public ; inclus dans la sauvegarde JSON ;
+- **organisateurs** : validations, clés étrangères, cascades, exports CSV / JSON ; fichiers `.htaccess` présents ; aucune erreur PHP dans le journal du serveur.
+
+Les tests ont été vérifiés en cassant volontairement le code (limite de places retirée, e-mail non masqué, nom non échappé, historique non écrit) : chaque fois, le bon test échoue.
+
+**JavaScript** (`assets/combo.js`) : ouvrir `test/combo.html` via un serveur local (`php -S localhost:8001` à la racine, puis `http://localhost:8001/test/combo.html`). Le titre de l'onglet commence par ✓ ou ✗ ; détail dans la page et dans `window.__results`.
+
+Le dossier `test/` n'est **pas à déployer** (il contient un `.htaccess` qui le bloque et `run.php` refuse de tourner hors ligne de commande, au cas où).
+
+---
+
 # Procédure de test manuel
 
-Tests à refaire avant une mise en ligne qui touche à l'interface. Ils se font sur une **copie jetable** : la vraie base `data/regie.sqlite` n'est jamais modifiée.
+Ce que les tests automatiques ne voient pas (affichage, clavier, téléphone). À refaire avant une mise en ligne qui touche à l'interface. Ils se font sur une **copie jetable** : la vraie base `data/regie.sqlite` n'est jamais modifiée.
 
 ## 1. Lancer le bac à sable
 
@@ -75,6 +104,17 @@ Onglet Responsables → « Modifier » sur une carte.
 | 25 | `index.php` sans événement, ou `?event=inconnu` | « Choisissez un événement », onglets et ☰ cachés |
 | 26 | Dans le navigateur, `?lang=br` | En-tête traduit (dates en breton), sélecteur rempli, changement d'onglet OK, pas d'erreur console |
 
+## 3 ter. Historique des retraits et page d'aide
+
+| # | Action | Attendu |
+|---|--------|---------|
+| 27 | Connecté : ouvrir un créneau, « Retirer » un bénévole | Toast « Retiré du créneau » ; dans l'onglet Bénévoles, la personne est toujours là (« disponible ») |
+| 28 | Bas de l'onglet Bénévoles → « Historique des retraits » | Ligne : date, nom (lien vers la fiche), « Retiré de <poste> · jour heures », date d'inscription |
+| 29 | Ouvrir la fiche de ce bénévole | Rubrique « Historique » avec le même retrait |
+| 30 | Supprimer une fiche bénévole (formulaire → Supprimer) | Dans l'historique : « Fiche supprimée » avec ses coordonnées, et ses créneaux marqués « fiche supprimée » |
+| 31 | Déconnecté | Aucun historique visible (ni onglet, ni fiche, ni `historique` dans `api.php?action=all`) |
+| 32 | `aide.php?event=<id>` puis BZH / EN | Onglet « Aide » / « Sikour » / « Help » en évidence, texte dans la bonne langue, sommaire cliquable, dates de l'en-tête traduites |
+
 ## 4. Téléphone (≤ 560 px)
 
 Outils de développement du navigateur → mode appareil, 400 px de large (ou une `<iframe>` de 400 px).
@@ -94,5 +134,7 @@ Outils de développement du navigateur → mode appareil, 400 px de large (ou un
 
 | Date | Qui | Résultat |
 |------|-----|----------|
+| 07/11/2026 | Claude | `run.php` : 209 vérifications OK (historique, page d'aide). 27–29 et 32 (BZH) OK dans Chrome (bac à sable) ; 30–31 couverts par `run.php`. |
+| 07/11/2026 | Claude | `run.php` : 171 vérifications OK ; `combo.html` : 40 OK (Chrome). |
 | 07/11/2026 | Claude (curl + Chrome sur le serveur de dev, lecture seule) | 23–26 OK (en-tête commun). |
 | 07/11/2026 | Claude (Chrome, bac à sable, copie de la base de dev) | 1–20 et 22 OK. 21 non vérifié sur un vrai téléphone. Tri « noms d'abord » (5) ajouté à la suite du test. |

@@ -56,7 +56,7 @@ const pageHtml=e=>e[HTML_KEY]||e.contactHtml||'';
 function navLinks(e){const id=e?encodeURIComponent(e.id):'';
   const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',resps:'&tab=resps',postes:'&tab=postes'};
   document.querySelectorAll('[data-nav]').forEach(a=>{const k=a.dataset.nav;
-    a.href=k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
+    a.href=k==='aide'?'aide.php'+(id?'?event='+id:''):k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
   const s=document.querySelector('[data-nav="signup"]');if(s)s.hidden=!!(e&&isPast(e));}
 function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>{el.hidden=true},3000)}
 async function api(body,retry=1){

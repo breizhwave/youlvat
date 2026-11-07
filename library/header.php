@@ -1,9 +1,9 @@
 <?php
 /*
- * En-tête commun (index.php, inscription.php, contact.php), écrit en HTML par le serveur.
+ * En-tête commun (index.php, inscription.php, contact.php, aide.php), écrit en HTML par le serveur.
  * Inclus juste après <body> : <?php include __DIR__ . '/library/header.php'; ?>
  * Variables attendues (préparées par la page avec library/page.php) :
- *   $page   'index' | 'inscription' | 'contact'
+ *   $page   'index' | 'inscription' | 'contact' | 'aide'
  *   $ev     événement courant (page_event()) ou null
  *   $events liste des événements (page_events())
  * Le JavaScript de chaque page remet ensuite à jour le sélecteur, les liens et les textes (traduction).
@@ -74,8 +74,10 @@ $tabs  = [ // clé, classe de couleur, libellé
 <?php endforeach; ?>
 <?php if ($isIdx): ?>
     <a class="tab" id="contactTab" href="contact.php<?= $q ?>" data-i18n="Contact">Contact</a>
+    <a class="tab" id="helpTab" href="aide.php<?= $q ?>" data-i18n="Aide">Aide</a>
 <?php else: ?>
     <a class="tab" data-nav="contact" href="contact.php<?= $q ?>"<?= $page === 'contact' ? ' aria-current="page" aria-selected="true"' : '' ?> data-i18n="Contact">Contact</a>
+    <a class="tab" data-nav="aide" href="aide.php<?= $q ?>"<?= $page === 'aide' ? ' aria-current="page" aria-selected="true"' : '' ?> data-i18n="Aide">Aide</a>
 <?php endif; ?>
   </nav>
   <div class="tabacts">

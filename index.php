@@ -47,7 +47,7 @@ I18N.applyStatic();
 const COLORS=['#3B6FD8','#D8573B','#2E9E7A','#9B59C7','#C99A1A','#D44C8C','#3E98B3','#7A8B2E'];
 const COLS={events:'events',postes:'postes',creneaux:'creneaux',benevoles:'benevoles',affs:'affectations',resps:'responsables'};
 const STATUTS=[['prevu',t('Prévu')],['present',t('Présent')],['absent',t('Absent')]];
-const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],resps:[],respLinks:[],respPers:[],eventId:null,tab:'plan',day:null,dayPinned:false,q:'',pq:'',cq:'',pres:null,ro:true};
+const S={events:[],postes:[],creneaux:[],benevoles:[],affs:[],resps:[],respLinks:[],respPers:[],hist:[],eventId:null,tab:'plan',day:null,dayPinned:false,q:'',pq:'',cq:'',pres:null,ro:true};
 const DR={kind:null,id:null,extra:null};
 const CFG=window.REGIE||{};
 const REFRESH_MS=15000;
@@ -209,7 +209,7 @@ function renderHeader(){
   sel.disabled=!S.events.length;$('#evEdit').hidden=!e;
   const img=$('#evImg');const iu=evImgUrl(e);img.hidden=!iu;if(iu&&img.getAttribute('src')!==iu)img.src=iu;
   $('#signupLink').href=signupUrl();
-  $('#contactTab').href=$('#changeLink').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');
+  $('#contactTab').href=$('#changeLink').href='contact.php'+(e?'?event='+encodeURIComponent(e.id):'');$('#helpTab').href='aide.php'+(e?'?event='+encodeURIComponent(e.id):'');
   $('#evMeta').textContent=e?evWhen(e):(db?t('Choisissez un événement'):'');
   document.querySelector('.tabrow').hidden=$('#burger').hidden=!e; /* pas d'onglets ni de menu sans événement */
   document.title=(e?e.nom+' · ':'')+t('Régie Bénévoles');
@@ -431,6 +431,17 @@ function fmtReg(iso){const d=new Date(iso);if(!iso||isNaN(d))return '—';
 /* tri de l'annuaire, mémorisé (rb.bsort) : par défaut les inscriptions les plus récentes en premier */
 const BSORT_DEF={name:1,date:-1,cren:-1,hours:-1};
 S.bsort=(()=>{try{const v=JSON.parse(ls.get('rb.bsort')||'null');if(v&&BSORT_DEF[v.k]&&(v.d===1||v.d===-1))return v}catch(e){}return {k:'date',d:-1}})();
+/* historique des retraits (organisateurs seulement : api.php ne l'envoie qu'en session admin) */
+const H_CAUSE={creneaux:'créneau supprimé',postes:'poste supprimé',events:'événement supprimé',benevoles:'fiche supprimée',responsables:'poste de responsable supprimé'};
+function histLine(h,withName){const d=h.detail||{};const b=h.benevoleId&&ben(h.benevoleId);
+  const who=withName?(b?plink('benevole',b.id,esc(bName(b))):`<b>${esc([h.prenom,h.nom].filter(Boolean).join(' '))}</b>`)+(h.action!=='fiche'&&!b&&h.benevoleId?` <span class="muted">(${t('fiche supprimée')})</span>`:'')+' · ':'';
+  const what=h.action==='fiche'?t('Fiche supprimée')+(h.tel||h.email?` <span class="muted">${esc([h.tel,h.email].filter(Boolean).join(' · '))}</span>`:'')
+    :h.action==='resp'?t('Retiré du poste de responsable {r}',{r:'« '+esc(d.titre||t('Responsable'))+' »'})
+    :t('Retiré de {p}',{p:`<b>${esc(d.poste||'—')}</b>`})+(d.jour?` · ${esc(shortDay(d.jour))} <span class="mono">${esc(hLab(d.debut)+' – '+hLab(d.fin))}</span>`:'');
+  const why=H_CAUSE[h.cause]&&!(h.action==='fiche')?` <span class="pill neu">${t(H_CAUSE[h.cause])}</span>`:'';
+  const when=`<span class="muted num" style="white-space:nowrap">${esc(fmtReg(h.createdAt))}</span>`;
+  return `<div class="hist-l">${when}<span>${who}${what}${why}${d.inscritLe?` <span class="muted">(${t('inscription du {d}',{d:esc(fmtReg(d.inscritLe))})})</span>`:''}</span></div>`}
+const histOfEvent=()=>S.hist.filter(h=>h.eventId===S.eventId||(h.action==='fiche'&&!h.eventId));
 function rBens(){
   const q=S.q.trim().toLowerCase();
   const nb=b=>shiftsOf(b.id).filter(x=>x.a.statut!=='absent').length;
@@ -445,7 +456,8 @@ function rBens(){
     <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;justify-content:flex-end"><label for="q" class="sr">${t('Rechercher')}</label><input id="q" class="search" type="search" placeholder="${S.ro?t('Nom, compétence…'):t('Nom, téléphone, compétence…')}" value="${esc(S.q)}">
     <button class="btn adm" type="button" data-act="csv">${t('Exporter CSV')}</button><a class="btn adm" href="export.php?format=json">${t('Sauvegarde JSON')}</a><button class="btn pri adm" type="button" data-act="ben-new">${t('+ Bénévole')}</button></div></div>
     ${list.length?`<div class="tbl-wrap"><table><thead><tr>${th('name',t('Bénévole'))}<th class="hide-sm">${t('Contact')}</th>${th('cren',t('Créneaux'))}${th('hours',t('Heures'))}${th('date',t('Inscription'))}<th>${t('État')}</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="panel empty">${S.benevoles.length?t('Aucun bénévole ne correspond à la recherche.'):t('Aucun bénévole. Ajoutez votre équipe.')}</div>`}
-    <p class="muted" style="margin:0">${t('Créneaux et heures comptés pour l’événement sélectionné ; les absents ne sont pas comptés.')}</p></section>`;
+    <p class="muted" style="margin:0">${t('Créneaux et heures comptés pour l’événement sélectionné ; les absents ne sont pas comptés.')}</p>
+    ${S.ro?'':(()=>{const hs=histOfEvent();return `<details class="panel hist"><summary><b>${t('Historique des retraits')}</b> <span class="muted num">(${hs.length})</span></summary><p class="muted" style="margin:6px 0 10px">${t('Visible des organisateurs seulement. Comprend les fiches supprimées et les retraits dus à la suppression d’un créneau ou d’un poste.')}</p>${hs.length?hs.map(h=>histLine(h,true)).join(''):`<div class="muted">${t('Aucun retrait pour l’instant.')}</div>`}</details>`})()}</section>`;
 }
 
 /* ---------- postes ---------- */
@@ -521,6 +533,7 @@ function drBen(b){
   `<div class="dr-b">
     <dl class="kv"><dt>${t('Téléphone')}</dt><dd class="mono">${icoTel(b.tel)||'—'}</dd><dt>${t('E-mail')}</dt><dd>${icoMail(b.email)||'—'}</dd><dt>${t('Inscription')}</dt><dd class="num">${esc(fmtReg(regDate(b)))}</dd><dt>${t('Heures')}</dt><dd class="num">${t('{h} sur cet événement',{h:fmtH(hoursOf(b.id))})}</dd>${b.notes?`<dt>${t('Notes')}</dt><dd>${esc(b.notes)}</dd>`:''}${rb.length?`<dt>${tn(rb.length,'Responsable','Responsables')}</dt><dd>${rb.map(r=>plink('responsable',r.id,esc(rTitle(r)))+` <span class="muted">(${tn(crensOfResp(r.id).length,'{n} créneau','{n} créneaux')})</span>`).join('<br>')}</dd>`:''}</dl>
     <div><h3 style="margin-bottom:4px">${t('Créneaux sur {e}',{e:esc(ev()?ev().nom:t('l’événement'))})}</h3><div class="list">${rows||`<div class="muted">${t('Aucun créneau pour l’instant. Ouvrez un créneau dans le Planning pour l’affecter.')}</div>`}</div></div>
+    ${(()=>{const hs=S.ro?[]:S.hist.filter(h=>h.benevoleId===b.id&&h.eventId===S.eventId);return hs.length?`<div><h3 style="margin-bottom:4px">${t('Historique')}</h3>${hs.map(h=>histLine(h,false)).join('')}</div>`:''})()}
     <div class="actions"><button class="btn adm" type="button" data-act="ben-edit" data-id="${esc(b.id)}">${t('Modifier la fiche')}</button><button class="btn" type="button" data-act="copy" data-id="${esc(b.id)}">${t('Copier son planning')}</button><button class="btn" type="button" data-act="link">${t('Copier le lien')}</button></div>
   </div>`;
 }
@@ -692,9 +705,9 @@ $('#evEdit').addEventListener('click',()=>{if(S.eventId)openForm('event',S.event
 /* remplace le temps réel du prototype : rechargement complet après chaque écriture et toutes les 15 s */
 async function load(){
   const j=await api();
-  const snap=JSON.stringify([j.events,j.postes,j.creneaux,j.benevoles,j.affectations,j.responsables,j.responsable_creneaux,j.responsable_personnes]);
+  const snap=JSON.stringify([j.events,j.postes,j.creneaux,j.benevoles,j.affectations,j.responsables,j.responsable_creneaux,j.responsable_personnes,j.historique]);
   const changed=snap!==lastSnap;lastSnap=snap;
-  if(changed){S.events=j.events;S.postes=j.postes;S.creneaux=j.creneaux;S.benevoles=j.benevoles;S.affs=j.affectations;S.resps=j.responsables||[];S.respLinks=j.responsable_creneaux||[];S.respPers=j.responsable_personnes||[]}
+  if(changed){S.events=j.events;S.postes=j.postes;S.creneaux=j.creneaux;S.benevoles=j.benevoles;S.affs=j.affectations;S.resps=j.responsables||[];S.respLinks=j.responsable_creneaux||[];S.respPers=j.responsable_personnes||[];S.hist=j.historique||[]}
   if(!S.ro&&!j.admin){location.reload()} /* session admin expirée */
   db=true;return changed;
 }

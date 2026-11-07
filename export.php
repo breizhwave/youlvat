@@ -37,6 +37,14 @@ if ($format === 'json') {
             $out[$t][$id] = array_filter($row, fn($v) => $v !== null);
         }
     }
+    // historique des retraits (pas dans TABLES : jamais modifiable par l'API)
+    $out['historique'] = [];
+    foreach ($pdo->query('SELECT * FROM historique ORDER BY created_at, id')->fetchAll() as $row) {
+        $row = row_to_api($row);
+        $id = $row['id'];
+        unset($row['id']);
+        $out['historique'][$id] = array_filter($row, fn($v) => $v !== null);
+    }
     header('Content-Type: application/json; charset=utf-8');
     header('Content-Disposition: attachment; filename="regie-sauvegarde-' . gmdate('Y-m-d-His') . '.json"');
     echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);

@@ -54,7 +54,7 @@ const plink=(k,id,html)=>id?`<a class="plink" href="${esc(permaUrl(k,id))}" titl
 function navLinks(e){const id=e?encodeURIComponent(e.id):'';
   const u={plan:'',dash:'&tab=dash',bens:'&tab=bens',resps:'&tab=resps',postes:'&tab=postes'};
   document.querySelectorAll('[data-nav]').forEach(a=>{const k=a.dataset.nav;
-    a.href=k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
+    a.href=k==='aide'?'aide.php'+(id?'?event='+id:''):k==='contact'||k==='change'?'contact.php'+(id?'?event='+id:''):k==='signup'?'inscription.php'+(id?'?event='+id:''):'index.php'+(id?'?event='+id+u[k]:'')});
   const s=document.querySelector('[data-nav="signup"]');if(s)s.hidden=!!(e&&isPast(e));}
 function span(c){const s=dayN(c.jour)*1440+tm(c.debut)+(tm(c.debut)<360?1440:0);let d=(tm(c.fin)-tm(c.debut)+1440)%1440;if(!d)d=1440;return [s,s+d]}
 const overlaps=(a,b)=>{const x=span(a),y=span(b);return x[0]<y[1]&&y[0]<x[1]};

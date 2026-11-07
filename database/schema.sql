@@ -125,3 +125,25 @@ CREATE TABLE IF NOT EXISTS responsable_creneaux (
   UNIQUE (responsable_id, creneau_id)
 );
 CREATE INDEX IF NOT EXISTS idx_respc_creneau ON responsable_creneaux(creneau_id);
+
+-- Historique des retraits, visible des organisateurs seulement (jamais envoyé au public).
+-- Écrit par l'API dans la même transaction que chaque suppression (log_removals() dans api.php) :
+--   retrait : affectation retirée (directement, ou parce que le créneau, le poste, l'événement ou la fiche a été supprimé)
+--   resp    : personne retirée d'un poste de responsable
+--   fiche   : fiche bénévole supprimée (copie complète dans detail)
+-- Pas de clé étrangère : les lignes survivent aux suppressions. Nom, contact et créneau sont recopiés.
+CREATE TABLE IF NOT EXISTS historique (
+  id           TEXT PRIMARY KEY,
+  event_id     TEXT,
+  benevole_id  TEXT,
+  action       TEXT NOT NULL CHECK (action IN ('retrait','resp','fiche')),
+  cause        TEXT NOT NULL,       -- table supprimée à l'origine (affectations, benevoles, creneaux, postes, events, responsables, responsable_personnes)
+  prenom       TEXT,
+  nom          TEXT,
+  tel          TEXT,
+  email        TEXT,
+  detail       TEXT,                -- JSON : créneau (poste, jour, debut, fin, statut, inscritLe) ou poste de responsable, ou fiche complète
+  created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_hist_event ON historique(event_id);
+CREATE INDEX IF NOT EXISTS idx_hist_benevole ON historique(benevole_id);

@@ -10,6 +10,8 @@
 //   POST api.php {action: signup_resp, responsableId, prenom, nom, tel, email, remarques?}  public : s'inscrire sur un poste de responsable où il reste de la place
 //   POST api.php {action: lookup, q}  public : bénévoles dont l'e-mail ou le téléphone est exactement q (ids seulement)
 //   POST api.php {action: login, password} / {action: logout}
+//   Chaque suppression (et chaque personne retirée d'un poste de responsable) est recopiée dans la table historique
+//   (log_removals()), renvoyée aux organisateurs seulement dans action=all (clé historique).
 
 require_once __DIR__ . '/library/auth.php';
 require_once __DIR__ . '/library/tables.php';
@@ -106,11 +108,63 @@ function set_resp_creneaux(PDO $pdo, string $rid, $ids): void
 
 // Personnes d'un poste de responsable, en différentiel pour ne jamais effacer une inscription publique faite entre-temps :
 // {remove: [ids], add: [{nom, tel?, email?} | {benevoleId}]}. À appeler dans tx().
+// Historique (organisateurs seulement) : avant une suppression, recopie ce qui va disparaître,
+// cascades comprises. À appeler dans la même transaction que le DELETE.
+//   $table / $id : ce qu'on supprime ; $persIds : [[id, responsable_id], …] personnes retirées une à une d'un poste de responsable (set_resp_personnes)
+function log_removals(PDO $pdo, string $table, ?string $id, array $persIds = []): void
+{
+    $affWhere = ['affectations' => 'a.id = ?', 'benevoles' => 'a.benevole_id = ?', 'creneaux' => 'a.creneau_id = ?',
+                 'postes' => 'c.poste_id = ?', 'events' => 'a.event_id = ?'][$table] ?? null;
+    $rpWhere = ['benevoles' => 'rp.benevole_id = ?', 'events' => 'rp.event_id = ?', 'responsables' => 'rp.responsable_id = ?',
+                'responsable_personnes' => 'rp.id = ?'][$table] ?? null;
+    $ins = $pdo->prepare('INSERT INTO historique (id, event_id, benevole_id, action, cause, prenom, nom, tel, email, detail, created_at)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $now = now_iso();
+    $json = fn($a) => json_encode(array_filter($a, fn($v) => $v !== null), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($affWhere !== null) {
+        $st = $pdo->prepare("SELECT a.event_id, a.benevole_id, a.statut, a.created_at AS inscrit, b.prenom, b.nom, b.tel, b.email,
+                                    c.id AS cid, c.jour, c.debut, c.fin, p.id AS pid, p.nom AS poste
+                               FROM affectations a JOIN benevoles b ON b.id = a.benevole_id
+                               JOIN creneaux c ON c.id = a.creneau_id JOIN postes p ON p.id = c.poste_id
+                              WHERE $affWhere");
+        $st->execute([$id]);
+        foreach ($st->fetchAll() as $r) $ins->execute([new_id(), $r['event_id'], $r['benevole_id'], 'retrait', $table,
+            $r['prenom'], $r['nom'], $r['tel'], $r['email'],
+            $json(['creneauId' => $r['cid'], 'posteId' => $r['pid'], 'poste' => $r['poste'], 'jour' => $r['jour'],
+                   'debut' => $r['debut'], 'fin' => $r['fin'], 'statut' => $r['statut'], 'inscritLe' => $r['inscrit']]), $now]);
+    }
+    $rps = [];
+    if ($rpWhere !== null) $rps[] = [$rpWhere, [$id]];
+    foreach ($persIds as $pair) $rps[] = ['rp.id = ? AND rp.responsable_id = ?', $pair]; // [id, responsable_id]
+    foreach ($rps as [$w, $v]) {
+        $st = $pdo->prepare("SELECT rp.event_id, rp.benevole_id, rp.created_at AS inscrit, r.id AS rid, r.titre,
+                                    COALESCE(b.prenom, '') AS prenom, COALESCE(b.nom, rp.nom) AS nom,
+                                    COALESCE(b.tel, rp.tel) AS tel, COALESCE(b.email, rp.email) AS email
+                               FROM responsable_personnes rp JOIN responsables r ON r.id = rp.responsable_id
+                               LEFT JOIN benevoles b ON b.id = rp.benevole_id
+                              WHERE $w");
+        $st->execute($v);
+        foreach ($st->fetchAll() as $r) $ins->execute([new_id(), $r['event_id'], $r['benevole_id'], 'resp', $table,
+            $r['prenom'] === '' ? null : $r['prenom'], $r['nom'], $r['tel'], $r['email'],
+            $json(['responsableId' => $r['rid'], 'titre' => $r['titre'], 'inscritLe' => $r['inscrit']]), $now]);
+    }
+    if ($table === 'benevoles') {
+        $st = $pdo->prepare('SELECT * FROM benevoles WHERE id = ?');
+        $st->execute([$id]);
+        $b = $st->fetch();
+        $st->closeCursor();
+        if ($b) $ins->execute([new_id(), null, $b['id'], 'fiche', $table, $b['prenom'], $b['nom'], $b['tel'], $b['email'],
+            $json(row_to_api($b)), $now]);
+    }
+}
+
 function set_resp_personnes(PDO $pdo, string $rid, $p): void
 {
     if (!is_array($p)) return;
     $del = $pdo->prepare('DELETE FROM responsable_personnes WHERE id = ? AND responsable_id = ?');
-    foreach ((array)($p['remove'] ?? []) as $id) if (is_string($id)) $del->execute([$id, $rid]);
+    $rm = array_values(array_filter((array)($p['remove'] ?? []), 'is_string'));
+    log_removals($pdo, 'responsable_personnes', null, array_map(fn($id) => [$id, $rid], $rm));
+    foreach ($rm as $id) $del->execute([$id, $rid]);
     $ins = $pdo->prepare('INSERT OR IGNORE INTO responsable_personnes (id, event_id, responsable_id, nom, tel, email, benevole_id)
         SELECT ?, event_id, id, ?, ?, ?, ? FROM responsables WHERE id = ?');
     foreach ((array)($p['add'] ?? []) as $a) {
@@ -341,6 +395,12 @@ try {
 
     if ($method === 'GET' && $action === 'all') {
         $extra = is_admin() && db_journal_mode() !== null ? ['dbMode' => db_journal_mode()] : [];
+        // historique des retraits : organisateurs seulement
+        if (is_admin()) $extra['historique'] = array_map(function ($r) {
+            $r = row_to_api($r);
+            $r['detail'] = json_decode($r['detail'] ?? 'null', true) ?: new stdClass();
+            return $r;
+        }, $pdo->query('SELECT * FROM historique ORDER BY created_at DESC, id')->fetchAll());
         out(['ok' => true, 'admin' => is_admin()] + $extra + fetch_all($pdo, is_admin()));
     }
 
@@ -395,9 +455,13 @@ try {
 
         case 'delete':
             if (!$id) fail('Identifiant manquant.');
-            $st = $pdo->prepare("DELETE FROM $table WHERE id = ?");
-            $st->execute([$id]);
-            out(['ok' => true, 'deleted' => $st->rowCount()]);
+            $n = tx($pdo, function () use ($pdo, $table, $id) {
+                log_removals($pdo, $table, $id); // copie dans l'historique ce qui va disparaître (cascades comprises)
+                $st = $pdo->prepare("DELETE FROM $table WHERE id = ?");
+                $st->execute([$id]);
+                return $st->rowCount();
+            });
+            out(['ok' => true, 'deleted' => $n]);
 
         default:
             fail('Action inconnue.', 404, 'not_found');

@@ -16,6 +16,23 @@ else if(KNOWN.includes(ls.get('rb.lang')))lang=ls.get('rb.lang');
 document.documentElement.lang=lang;
 
 const BR={
+/* page d'aide (aide.php) */
+"Aide":"Sikour",
+"Mode d’emploi du planning des bénévoles : inscription, consultation, organisation, historique.":"Doare-implij steuñv ar skoazellerien : enskrivañ, sellet, aozañ, istor.",
+/* historique des retraits (organisateurs) */
+"Historique des retraits":"Roll an tennadennoù",
+"Historique":"Istor",
+"Retiré de {p}":"Tennet eus {p}",
+"Retiré du poste de responsable {r}":"Tennet eus ar post karget {r}",
+"Fiche supprimée":"Fichenn dilamet",
+"créneau supprimé":"prantad dilamet",
+"poste supprimé":"post dilamet",
+"événement supprimé":"darvoud dilamet",
+"poste de responsable supprimé":"post karget dilamet",
+"fiche supprimée":"fichenn dilamet",
+"inscription du {d}":"enskrivet d'an {d}",
+"Aucun retrait pour l’instant.":"Tennadenn ebet evit c'hoazh.",
+"Visible des organisateurs seulement. Comprend les fiches supprimées et les retraits dus à la suppression d’un créneau ou d’un poste.":"Gwelet gant an aozerien hepken. Ennañ ez eus ar fichennoù dilamet hag an tennadennoù abalamour d'ur prantad pe d'ur post dilamet.",
 /* liste à choix avec recherche (assets/combo.js) */
 "tapez un nom…":"skrivit un anv…",
 "Aucun résultat":"Disoc'h ebet",
@@ -411,6 +428,23 @@ const BR={
 
 /* English: same French keys. Keep it in sync with BR. */
 const EN={
+/* page d'aide (aide.php) */
+"Aide":"Help",
+"Mode d’emploi du planning des bénévoles : inscription, consultation, organisation, historique.":"How to use the volunteer schedule: signing up, viewing, organising, history.",
+/* historique des retraits (organisateurs) */
+"Historique des retraits":"Removal history",
+"Historique":"History",
+"Retiré de {p}":"Removed from {p}",
+"Retiré du poste de responsable {r}":"Removed from lead post {r}",
+"Fiche supprimée":"Record deleted",
+"créneau supprimé":"shift deleted",
+"poste supprimé":"role deleted",
+"événement supprimé":"event deleted",
+"poste de responsable supprimé":"lead post deleted",
+"fiche supprimée":"record deleted",
+"inscription du {d}":"signed up {d}",
+"Aucun retrait pour l’instant.":"No removals yet.",
+"Visible des organisateurs seulement. Comprend les fiches supprimées et les retraits dus à la suppression d’un créneau ou d’un poste.":"Visible to organisers only. Includes deleted records and removals caused by deleting a shift or role.",
 /* liste à choix avec recherche (assets/combo.js) */
 "tapez un nom…":"type a name…",
 "Aucun résultat":"No results",
