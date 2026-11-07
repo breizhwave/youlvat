@@ -45,17 +45,20 @@ regie/
   assets/app.css     styles communs aux deux pages
   assets/rte.js      éditeur de texte riche partagé (page contact, encadré d'appel)
   assets/nav.js      menu des pages sur téléphone (bouton ☰ jaune), commun aux trois pages
+  assets/combo.js    listes à choix avec recherche (bénévole à affecter / à ajouter comme responsable)
   assets/i18n.js     traductions (brezhoneg / français / English), dates en breton, sélecteur de langue
   api.php            API JSON
   config.php         mot de passe admin (hash), DSN, nom de l'appli
   library/db.php         connexion PDO + création du schéma si absent
   library/html.php       nettoyage du texte riche (liste blanche de balises)
+  library/footer.php     pied de page commun aux trois pages (include PHP), à modifier ici
   library/tables.php     liste blanche des colonnes, camelCase <-> snake_case, span() côté PHP
   library/auth.php       session + jeton CSRF
   data/              regie.sqlite (+ .htaccess, index.php)
   export.php         export CSV (bénévoles × créneaux) et sauvegarde JSON complète
   import.php         import d'une sauvegarde JSON (sert aussi à changer d'hébergeur ou de SGBD)
   permalink.md       structure des liens permanents (créneau, poste, bénévole)
+  test/              procédure de test manuel (PROCEDURE.md) + bac à sable sandbox.sh (copie jetable, à ne pas déployer)
   database/schema.sql, seed_demo.sql, seed_kalanna2026.sql, seed_kalanna2026.json
 ```
 

@@ -58,6 +58,7 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
 </header>
 <main class="wrap" id="main"><div class="empty" data-i18n="Chargement…">Chargement…</div></main>
+<?php include __DIR__ . '/library/footer.php'; ?>
 <div id="toast" role="status" hidden></div>
 
 <script>

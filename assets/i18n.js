@@ -16,6 +16,11 @@ else if(KNOWN.includes(ls.get('rb.lang')))lang=ls.get('rb.lang');
 document.documentElement.lang=lang;
 
 const BR={
+/* liste à choix avec recherche (assets/combo.js) */
+"tapez un nom…":"skrivit un anv…",
+"Aucun résultat":"Disoc'h ebet",
+/* pied de page (library/footer.php) */
+"Encore une réalisation Breizhvibe Lokorn":"Un oberenn all gant Breizhvibe Lokorn",
 /* responsables */
 "Menu":"Lañser",
 "Devenir responsable":"Dont da vezañ karget",
@@ -406,6 +411,11 @@ const BR={
 
 /* English: same French keys. Keep it in sync with BR. */
 const EN={
+/* liste à choix avec recherche (assets/combo.js) */
+"tapez un nom…":"type a name…",
+"Aucun résultat":"No results",
+/* pied de page (library/footer.php) */
+"Encore une réalisation Breizhvibe Lokorn":"Another Breizhvibe Lokorn creation",
 /* responsables */
 "Menu":"Menu",
 "Devenir responsable":"Become a lead",

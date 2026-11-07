@@ -23,6 +23,7 @@ header('Content-Type: text/html; charset=utf-8');
 <script src="assets/i18n.js?v=<?= filemtime(__DIR__ . '/assets/i18n.js') ?>"></script>
 <script src="assets/nav.js?v=<?= filemtime(__DIR__ . '/assets/nav.js') ?>"></script>
 <script src="assets/rte.js?v=<?= filemtime(__DIR__ . '/assets/rte.js') ?>"></script>
+<script src="assets/combo.js?v=<?= filemtime(__DIR__ . '/assets/combo.js') ?>"></script>
 </head>
 <body<?= is_admin() ? '' : ' class="ro"' ?>>
 
@@ -68,6 +69,7 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
 </header>
 <main class="wrap" id="main"><div class="empty" data-i18n="Chargement des données…">Chargement des données…</div></main>
+<?php include __DIR__ . '/library/footer.php'; ?>
 <div id="scrim" hidden></div>
 <aside id="drawer" hidden aria-modal="true" role="dialog"></aside>
 <div id="toast" role="status" hidden></div>
@@ -484,7 +486,7 @@ function rBens(){
 /* ---------- postes ---------- */
 function rPostes(){
   const cards=P().map(p=>{const pc=C().filter(c=>c.posteId===p.id);
-    const rows=pc.map(c=>{const n=actifs(c.id).length,b=+c.besoin||0;const st=fillState(c);return `<div class="row click" data-act="cren" data-id="${esc(c.id)}"><span><b style="text-transform:capitalize;font-weight:500">${esc(shortDay(c.jour))}</b> <span class="mono muted">${esc(hours(c))}</span></span><span class="muted num">${fmtH(dur(c))}</span><span class="pill ${st==='full'?'ok':st==='part'?'warn':'crit'} num">${n}/${b}</span></div>`}).join('');
+    const rows=pc.map(c=>{const n=actifs(c.id).length,b=+c.besoin||0;const st=fillState(c);return `<div class="row click" data-act="cren" data-id="${esc(c.id)}"><div style="min-width:0"><b style="text-transform:capitalize;font-weight:500">${esc(shortDay(c.jour))}</b> <span class="mono muted">${esc(hours(c))}</span>${c.note?`<div class="cr-note">${esc(c.note)}</div>`:''}</div><span class="muted num">${fmtH(dur(c))}</span><span class="pill ${st==='full'?'ok':st==='part'?'warn':'crit'} num">${n}/${b}</span></div>`}).join('');
     return `<article class="panel${S.link.poste===p.id?' hl':''}" id="p-${esc(p.id)}"><div class="pc-h"><div><h3 class="pname"><span class="dot" style="background:${pColor(p)}"></span>${plink('poste',p.id,esc(p.nom))}</h3>${p.responsable?`<div class="muted" style="font-size:13px;margin-top:3px">${t('Resp.')} ${esc(p.responsable)}</div>`:''}</div><button class="btn sm adm" type="button" data-act="poste-edit" data-id="${esc(p.id)}">${t('Modifier')}</button></div>
     ${p.description?`<div class="pc-d">${esc(p.description)}</div>`:''}
     <div class="pc-c list">${rows||`<div class="empty" style="padding:14px">${t('Aucun créneau.')}</div>`}</div>
@@ -521,9 +523,11 @@ function renderDrawer(){
   if(k==='cren'){const c=cren(DR.id);if(!c){closeDr();return}d.innerHTML=drCren(c)}
   else if(k==='ben'){const b=ben(DR.id);if(!b){closeDr();return}d.innerHTML=drBen(b)}
   else if(k==='form')d.innerHTML=drForm();
+  if(k!=='login')Combo.enhance(d);
   else if(k==='login')d.innerHTML=head(t('Espace organisateurs'),t('Un mot de passe partagé pour toute l’équipe d’organisation.'))+
     `<form class="dr-b" id="loginFrm">${CFG.authEnabled?`<div class="field"><label for="pw">${t('Mot de passe')}</label><input id="pw" name="password" type="password" autocomplete="current-password" required></div><div class="actions"><button class="btn pri" type="submit">${t('Se connecter')}</button></div>`:`<div class="notice">${t('Aucun mot de passe administrateur n’est configuré. Renseignez admin_password_hash dans config.php.')}</div>`}</form>`;
 }
+const benSearch=b=>[b.prenom,b.nom,b.email,b.tel].filter(Boolean).join(' '); /* recherche des listes à choix (combo.js) */
 function drCren(c){
   const p=poste(c.posteId);const as=affsOf(c.id);const n=actifs(c.id).length;const b=+c.besoin||0;const rs=respsOf(c.id);
   const who=as.map(a=>{const bb=ben(a.benevoleId);const cf=conflictsOf(a.benevoleId).has(c.id)&&a.statut!=='absent';
@@ -532,14 +536,14 @@ function drCren(c){
     <button class="btn sm" type="button" data-act="unassign" data-id="${esc(a.id)}">${t('Retirer')}</button>`}</div>`}).join('');
   const inIds=new Set(as.map(a=>a.benevoleId));
   const cand=S.benevoles.filter(x=>!inIds.has(x.id)).map(x=>({x,busy:busyFor(x.id,c),h:hoursOf(x.id)})).sort((a,b)=>(a.busy-b.busy)||(a.h-b.h)||bName(a.x).localeCompare(bName(b.x),'fr'));
-  const opts=cand.map(o=>`<option value="${esc(o.x.id)}"${o.busy?' disabled':''}>${esc(bName(o.x))} · ${o.busy?t('déjà occupé'):fmtH(o.h)}</option>`).join('');
+  const opts=cand.map(o=>`<option value="${esc(o.x.id)}" data-s="${esc(benSearch(o.x))}"${o.busy?' disabled':''}>${esc(bName(o.x))} · ${o.busy?t('déjà occupé'):fmtH(o.h)}</option>`).join('');
   return head(`<span class="pname"><span class="dot" style="background:${pColor(p)}"></span>${p?plink('poste',p.id,esc(posteNom(p))):esc(posteNom(p))}</span>`,`<span style="text-transform:capitalize">${esc(fmtDay(c.jour))}</span> · <span class="mono">${esc(hours(c))}</span> · ${fmtH(dur(c))}`)+
   `<div class="dr-b">
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="pill ${fillState(c)==='full'?'ok':n?'warn':'crit'} num">${t('{n}/{b} bénévoles',{n,b})}</span>${c.note?`<span class="muted">${esc(c.note)}</span>`:''}</div>
     ${rs.length?`<div><span class="muted">${tn(rs.length,'Responsable','Responsables')} :</span> ${rs.map(r=>plink('responsable',r.id,esc(rTitle(r)))+(persOf(r.id).length?`<div class="pers-l" style="margin:4px 0 6px">${persOf(r.id).map(persLine).join('')}</div>`:'')+(rLeft(r)&&!isPast(ev())?` <a href="${esc(respSignupUrl(r.id))}" style="font-size:12.5px">${t('Je me propose')}</a>`:'')+(ficheUrl(r)?` <a href="${esc(ficheUrl(r))}" target="_blank" rel="noopener" style="font-size:12.5px">${t('Fiche de poste')} ↗</a>`:'')).join(', ')}</div>`:''}
     <div><h3 style="margin-bottom:6px">${t('Équipe')}</h3>${who||`<div class="muted">${t('Personne n’est encore affecté.')}</div>`}</div>
     ${S.ro?(n<b?`<a class="btn pri" style="align-self:flex-start" href="${esc(signupUrl(c.id))}">${tn(b-n,'S’inscrire sur ce créneau ({n} place)','S’inscrire sur ce créneau ({n} places)')}</a>`:`<span class="muted">${t('Ce créneau est complet.')}</span>`):`<div class="field"><label for="addBen">${t('Affecter un bénévole')}</label>
-      ${cand.length?`<div style="display:flex;gap:8px"><select id="addBen"><option value="">${t('Choisir…')}</option>${opts}</select><button class="btn pri" type="button" data-act="assign">${t('Affecter')}</button></div><span class="muted" style="font-size:12.5px">${t('Triés par heures déjà planifiées (les moins chargés d’abord). Les bénévoles déjà occupés sur cette plage sont grisés.')}</span>`:`<span class="muted">${t('Tous les bénévoles de l’annuaire sont déjà sur ce créneau.')}</span>`}
+      ${cand.length?`<div style="display:flex;gap:8px"><div style="flex:1;min-width:0"><select id="addBen" data-combo data-combo-go="#assignBtn"><option value="">${t('Choisir…')}</option>${opts}</select></div><button class="btn pri" type="button" id="assignBtn" data-act="assign">${t('Affecter')}</button></div><span class="muted" style="font-size:12.5px">${t('Triés par heures déjà planifiées (les moins chargés d’abord). Les bénévoles déjà occupés sur cette plage sont grisés.')}</span>`:`<span class="muted">${t('Tous les bénévoles de l’annuaire sont déjà sur ce créneau.')}</span>`}
     </div>`}
     <div class="actions"><button class="btn sm" type="button" data-act="link">${t('Copier le lien')}</button></div>
     <div class="actions adm"><button class="btn" type="button" data-act="cren-edit" data-id="${esc(c.id)}">${t('Modifier le créneau')}</button><button class="btn danger" type="button" data-act="cren-del" data-id="${esc(c.id)}">${t('Supprimer le créneau')}</button></div>
@@ -574,7 +578,7 @@ function fieldHtml(f,v){
   else if(f.type==='size')inp=`<select id="${id}" name="${f.k}"><option value="">—</option>${['XS','S','M','L','XL','XXL'].map(s=>`<option${s===val?' selected':''}>${s}</option>`).join('')}</select>`;
   else if(f.type==='respben'){const ps=val||[];const inIds=new Set(ps.map(x=>x.benevoleId));
     /* bénévoles déjà sur le poste (décocher pour retirer), puis un bénévole à ajouter */
-    inp=`${ps.map(x=>`<label class="chk"><input type="checkbox" name="${f.k}" value="${esc(x.id)}" checked> ${esc(persName(x))}</label>`).join('')}<select id="${id}" name="addBen" aria-label="${t('Ajouter un bénévole')}"><option value="">${t('+ Ajouter un bénévole…')}</option>${S.benevoles.filter(b=>!inIds.has(b.id)).sort((a,b)=>bName(a).localeCompare(bName(b),'fr')).map(b=>`<option value="${esc(b.id)}">${esc(bName(b))}</option>`).join('')}</select>`;
+    inp=`${ps.map(x=>`<label class="chk"><input type="checkbox" name="${f.k}" value="${esc(x.id)}" checked> ${esc(persName(x))}</label>`).join('')}<select id="${id}" name="addBen" data-combo aria-label="${t('Ajouter un bénévole')}"><option value="">${t('+ Ajouter un bénévole…')}</option>${S.benevoles.filter(b=>!inIds.has(b.id)).sort((a,b)=>bName(a).localeCompare(bName(b),'fr')).map(b=>`<option value="${esc(b.id)}" data-s="${esc(benSearch(b))}">${esc(bName(b))}</option>`).join('')}</select>`;
     return `<div class="field"><span class="lab" style="font-weight:500">${esc(f.l)}</span>${inp}</div>`}
   else if(f.type==='crens'){const sel=new Set(val||[]);const cs=C();
     /* cases à cocher regroupées par jour */
@@ -689,7 +693,7 @@ document.addEventListener('click',async ev0=>{
     case 'copy':{const b=ben(id);try{await navigator.clipboard.writeText(planText(b));toast(t('Planning copié, prêt à envoyer par SMS ou e-mail.'))}catch(e){toast(t('Copie impossible dans cette vue.'))}break}
     case 'del':if(armed(el,t('Confirmer la suppression')))deleteCurrent();break;
     case 'assign':{const sel=$('#addBen');const bid=sel&&sel.value;if(!bid){toast(t('Choisissez un bénévole.'));break}const c=cren(DR.id);
-      if(await w(()=>create('affs',{eventId:c.eventId,creneauId:c.id,benevoleId:bid,statut:'prevu'}),t('{b} affecté',{b:bName(ben(bid))})))render();break}
+      if(await w(()=>create('affs',{eventId:c.eventId,creneauId:c.id,benevoleId:bid,statut:'prevu'}),t('{b} affecté',{b:bName(ben(bid))}))){render();const q=$('#addBen-q');if(q)q.focus()}break}
     case 'unassign':if(await w(()=>remove('affs',id),t('Retiré du créneau')))render();break;
   }
 });
@@ -730,10 +734,10 @@ async function load(){
   db=true;return changed;
 }
 async function poll(){
-  if(document.hidden||DR.form||S.ctaEdit)return;
+  if(document.hidden||DR.form||S.ctaEdit||Combo.active())return;
   const typing=document.activeElement&&['q','pq','cq'].includes(document.activeElement.id)&&document.activeElement.id;
   const pick=$('#addBen');const picked=pick&&pick.value;
-  try{if(await load()){render.focusQ=typing;render();render.focusQ=false;const p2=$('#addBen');if(picked&&p2)p2.value=picked}}
+  try{if(await load()){render.focusQ=typing;render();render.focusQ=false;const p2=$('#addBen');if(picked&&p2){p2.value=picked;const q=$('#addBen-q'),o=p2.selectedOptions[0];if(q&&o&&o.value)q.value=o.text}}}
   catch(e){if(e&&(e.code==='auth'||e.code==='csrf'))location.reload()}
 }
 async function boot(){
