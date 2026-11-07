@@ -383,3 +383,4 @@ a.plink:hover .plink-i{opacity:.9}
 .combo-l li.cur{background:var(--accent);color:var(--accent-ink)}
 .combo-l li.dis{color:var(--muted);opacity:.6;cursor:default}
 .combo-l li.combo-none{color:var(--muted);cursor:default}
+.site-foot img{display:inline-block;height:28px;width:auto;margin-bottom:4px}

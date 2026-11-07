@@ -2,17 +2,22 @@
 // Page publique : contact de l'événement. Texte libre (modifiable par les organisateurs avec l'éditeur intégré,
 // une version par langue) + e-mail, téléphone et autres informations.
 require_once __DIR__ . '/library/auth.php';
+require_once __DIR__ . '/library/page.php';
 start_session();
 $setupError = null;
 try { db(); } catch (Throwable $e) { $setupError = $e instanceof DbSetupError ? $e->getMessage() : 'Connexion à la base impossible.'; }
 $boot = ['csrf' => csrf_token(), 'admin' => is_admin(), 'setupError' => $setupError];
+$page   = 'contact';
+$ev     = $setupError ? null : page_event();
+$events = $setupError ? [] : page_events();
+$when   = ev_when($ev);
 header('Content-Type: text/html; charset=utf-8');
 ?><!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Contact</title>
+<?php page_meta('Contact', $ev, ($ev ? 'Contacter l’organisation de ' . $ev['nom'] . ($when ? ' (' . $when . ')' : '') . ' : e-mail, téléphone et informations pratiques.' : 'Contacter l’organisation.')); ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -22,41 +27,7 @@ header('Content-Type: text/html; charset=utf-8');
 <script src="assets/rte.js?v=<?= filemtime(__DIR__ . '/assets/rte.js') ?>"></script>
 </head>
 <body<?= is_admin() ? '' : ' class="ro"' ?>>
-<header class="band">
-  <div class="wrap band-in">
-    <div class="brand">
-      <a class="mark" href="./" title="Tous les événements" data-i18n-title="Tous les événements">YV</a>
-      <div class="brand-t">YOUL VAT<small data-i18n="Régie Bénévoles">Régie Bénévoles</small></div>
-    </div>
-    <div class="evcenter">
-      <img id="evImg" class="evimg" alt="" hidden>
-      <div class="brand-b">
-        <div class="evline">
-          <label for="evSel" class="sr" data-i18n="Événement">Événement</label>
-          <select id="evSel"></select>
-        </div>
-        <div class="brand-s" id="evMeta" data-i18n="Chargement…">Chargement…</div>
-      </div>
-    </div>
-    <div class="evpick">
-      <div class="langrow"><div class="langsw" role="group" aria-label="Yezh / Langue"></div><button class="burger" id="burger" type="button" aria-expanded="false" title="Menu" data-i18n-title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
-    </div>
-  </div>
-  <div class="wrap tabrow">
-  <nav class="tabs" aria-label="Sections">
-    <a class="tab t-white" data-nav="plan" href="index.php" data-i18n="Planning">Planning</a>
-    <a class="tab" data-nav="dash" href="index.php" data-i18n="Tableau de bord">Tableau de bord</a>
-    <a class="tab t-yellow" data-nav="bens" href="index.php" data-i18n="Bénévoles">Bénévoles</a>
-    <a class="tab t-yellow" data-nav="resps" href="index.php" data-i18n="Responsables">Responsables</a>
-    <a class="tab t-white" data-nav="postes" href="index.php" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</a>
-    <a class="tab" data-nav="contact" href="index.php" aria-current="page" aria-selected="true" data-i18n="Contact">Contact</a>
-  </nav>
-  <div class="tabacts">
-    <a class="btn pri sm" data-nav="signup" href="inscription.php" data-i18n="S’inscrire">S’inscrire</a>
-    <a class="btn danger fill sm" data-nav="change" href="contact.php" data-i18n="Changer / me désister">Changer / me désister</a>
-  </div>
-  </div>
-</header>
+<?php include __DIR__ . '/library/header.php'; ?>
 <main class="wrap" id="main"><div class="empty" data-i18n="Chargement…">Chargement…</div></main>
 <?php include __DIR__ . '/library/footer.php'; ?>
 <div id="toast" role="status" hidden></div>

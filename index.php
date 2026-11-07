@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/library/auth.php';
+require_once __DIR__ . '/library/page.php';
 start_session();
 $setupError = null;
 try { db(); } catch (Throwable $e) { $setupError = $e instanceof DbSetupError ? $e->getMessage() : 'Connexion à la base impossible : ' . $e->getMessage(); }
@@ -9,13 +10,17 @@ $boot = [
     'authEnabled' => auth_enabled(),
     'setupError'  => $setupError,
 ];
+$page   = 'index';
+$ev     = $setupError ? null : page_event();
+$events = $setupError ? [] : page_events();
+$when   = ev_when($ev);
 header('Content-Type: text/html; charset=utf-8');
 ?><!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title><?= htmlspecialchars(config()['app_name']) ?></title>
+<?php page_meta('Planning des bénévoles', $ev, 'Planning des bénévoles' . ($ev ? ' — ' . $ev['nom'] . ($when ? ', ' . $when : '') . '. Créneaux, postes et responsables, consultables sans compte.' : '. Choisissez un événement.')); ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -27,47 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 </head>
 <body<?= is_admin() ? '' : ' class="ro"' ?>>
 
-<header class="band">
-  <div class="wrap band-in">
-    <div class="brand">
-      <a class="mark" href="./" title="Tous les événements" data-i18n-title="Tous les événements">YV</a>
-      <div class="brand-t">YOUL VAT<small data-i18n="Régie Bénévoles">Régie Bénévoles</small></div>
-    </div>
-    <div class="evcenter">
-      <img id="evImg" class="evimg" alt="" hidden>
-      <div class="brand-b">
-        <div class="evline">
-          <label for="evSel" class="sr" data-i18n="Événement">Événement</label>
-          <select id="evSel"></select>
-          <button class="btn band-btn sm adm" id="evEdit" type="button" hidden data-i18n="Modifier">Modifier</button>
-          <button class="btn band-btn sm adm quiet" id="evNew" type="button" data-i18n="+ Événement">+ Événement</button>
-        </div>
-        <div class="brand-s" id="evMeta" data-i18n="Chargement…">Chargement…</div>
-      </div>
-    </div>
-    <div class="evpick">
-      <div class="evpick-col">
-        <div class="langrow"><div class="langsw" role="group" aria-label="Yezh / Langue"></div><button class="burger" id="burger" type="button" aria-expanded="false" title="Menu" data-i18n-title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
-        <button class="btn band-btn sm" id="login" type="button" hidden data-i18n="Organisateurs">Organisateurs</button>
-        <button class="btn band-btn sm" id="logout" type="button" hidden data-i18n="Déconnexion">Déconnexion</button>
-      </div>
-    </div>
-  </div>
-  <div class="wrap tabrow">
-  <nav class="tabs" role="tablist" aria-label="Sections">
-    <button class="tab t-white" role="tab" data-tab="plan" type="button" data-i18n="Planning">Planning</button>
-    <button class="tab" role="tab" data-tab="dash" type="button" data-i18n="Tableau de bord">Tableau de bord</button>
-    <button class="tab t-yellow" role="tab" data-tab="bens" type="button" data-i18n="Bénévoles">Bénévoles</button>
-    <button class="tab t-yellow" role="tab" data-tab="resps" type="button" data-i18n="Responsables">Responsables</button>
-    <button class="tab t-white" role="tab" data-tab="postes" type="button" data-i18n="Postes &amp; créneaux">Postes &amp; créneaux</button>
-    <a class="tab" id="contactTab" href="contact.php" data-i18n="Contact">Contact</a>
-  </nav>
-  <div class="tabacts">
-    <a class="btn pri sm" id="signupLink" href="inscription.php" data-i18n="S’inscrire">S’inscrire</a>
-    <a class="btn danger fill sm" id="changeLink" href="contact.php" data-i18n="Changer / me désister">Changer / me désister</a>
-  </div>
-  </div>
-</header>
+<?php include __DIR__ . '/library/header.php'; ?>
 <main class="wrap" id="main"><div class="empty" data-i18n="Chargement des données…">Chargement des données…</div></main>
 <?php include __DIR__ . '/library/footer.php'; ?>
 <div id="scrim" hidden></div>

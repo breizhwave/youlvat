@@ -66,6 +66,15 @@ Onglet Responsables → « Modifier » sur une carte.
 | 18 | `?lang=br` / `?lang=en` | « Un oberenn all gant Breizhvibe Lokorn » / « Another Breizhvibe Lokorn creation » |
 | 19 | Clic sur le lien | `https://wave.bzh/en/breizhvibe/#youlvat-case` dans un nouvel onglet |
 
+## 3 bis. En-tête et balises SEO (`library/header.php`, `library/page.php`)
+
+| # | Action | Attendu |
+|---|--------|---------|
+| 23 | `curl -s 'http://localhost:8765/index.php?event=<id>' \| grep -E '<title>\|description\|og:\|evMeta'` | Titre « <événement> · Planning des bénévoles », description, `og:image`, lieu et dates dans `#evMeta` (sans JavaScript) |
+| 24 | Idem `inscription.php?event=<id>`, `contact.php?event=<id>`, `index.php?creneau=<id>` | Bon événement (déduit du créneau), liens des onglets avec `?event=` |
+| 25 | `index.php` sans événement, ou `?event=inconnu` | « Choisissez un événement », onglets et ☰ cachés |
+| 26 | Dans le navigateur, `?lang=br` | En-tête traduit (dates en breton), sélecteur rempli, changement d'onglet OK, pas d'erreur console |
+
 ## 4. Téléphone (≤ 560 px)
 
 Outils de développement du navigateur → mode appareil, 400 px de large (ou une `<iframe>` de 400 px).
@@ -85,4 +94,5 @@ Outils de développement du navigateur → mode appareil, 400 px de large (ou un
 
 | Date | Qui | Résultat |
 |------|-----|----------|
+| 07/11/2026 | Claude (curl + Chrome sur le serveur de dev, lecture seule) | 23–26 OK (en-tête commun). |
 | 07/11/2026 | Claude (Chrome, bac à sable, copie de la base de dev) | 1–20 et 22 OK. 21 non vérifié sur un vrai téléphone. Tri « noms d'abord » (5) ajouté à la suite du test. |

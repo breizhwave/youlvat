@@ -20,7 +20,7 @@ const BR={
 "tapez un nom…":"skrivit un anv…",
 "Aucun résultat":"Disoc'h ebet",
 /* pied de page (library/footer.php) */
-"Encore une réalisation Breizhvibe Lokorn":"Un oberenn all gant Breizhvibe Lokorn",
+"Encore une réalisation : Breizhvibe Lokorn":"Un oberenn all gant : Breizhvibe Lokorn",
 /* responsables */
 "Menu":"Lañser",
 "Devenir responsable":"Dont da vezañ karget",
@@ -415,7 +415,7 @@ const EN={
 "tapez un nom…":"type a name…",
 "Aucun résultat":"No results",
 /* pied de page (library/footer.php) */
-"Encore une réalisation Breizhvibe Lokorn":"Another Breizhvibe Lokorn creation",
+"Encore une réalisation : Breizhvibe Lokorn":"Another creation by: Breizhvibe Lokorn",
 /* responsables */
 "Menu":"Menu",
 "Devenir responsable":"Become a lead",

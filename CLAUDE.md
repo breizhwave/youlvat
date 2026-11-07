@@ -51,7 +51,9 @@ regie/
   config.php         mot de passe admin (hash), DSN, nom de l'appli
   library/db.php         connexion PDO + création du schéma si absent
   library/html.php       nettoyage du texte riche (liste blanche de balises)
+  library/header.php     en-tête commun aux trois pages (include PHP, variables $page, $ev, $events)
   library/footer.php     pied de page commun aux trois pages (include PHP), à modifier ici
+  library/page.php       rendu serveur : événement courant, <title>, description, Open Graph (SEO, aperçus de liens)
   library/tables.php     liste blanche des colonnes, camelCase <-> snake_case, span() côté PHP
   library/auth.php       session + jeton CSRF
   data/              regie.sqlite (+ .htaccess, index.php)
