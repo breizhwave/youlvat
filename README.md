@@ -5,7 +5,7 @@ LOGICIEL DE GESTION DES BENEVOLES POUR EVENEMENTS FESTIFS — volunteer scheduli
 ![YOUL VAT volunteer management](https://ik.imagekit.io/breizhwave/cms/webmasterbulletin/volonteer-management.jpg)
 
 Trilingue brezhoneg / français / English (`?lang=br|fr|en`).
-
+## Requirements / installation
 PHP 8 + SQLite, no framework, no Composer, no build step: upload the folder by FTP and open it.
 Copy `config.example.php` to `config.php` and set `admin_password_hash`
 (`php -r 'echo password_hash("secret", PASSWORD_DEFAULT), PHP_EOL;'`).
@@ -23,3 +23,6 @@ Deleting an event, a poste or a créneau cascades down (`ON DELETE CASCADE`).
 through `affectations`.
 
 **Schema diagram, rules, life cycle and how concurrent writes are handled: [`database.md`](database.md).**
+
+
+Réalisation : [Erwan Pianezza / LoKOrn / 2026 / wave.bzh](https://wave.bzh/en/breizhvibe/youlvat/)
